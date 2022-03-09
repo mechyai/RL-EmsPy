@@ -1,0 +1,12 @@
+
+!- Custom Schedule File
+Schedule:File,
+	ERCOT FMIX 2019 - Biomass,
+	Any Number,
+	A:/Files/PycharmProjects/RL-BCA/Current_Prototype/BEM/ScheduleFiles/ERCOT_FMIX_2019.csv,
+	3,
+	1,
+	,
+	,
+	No,
+	15;

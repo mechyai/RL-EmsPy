@@ -1,0 +1,12 @@
+
+!- Custom Schedule File
+Schedule:File,
+	ERCOT DAM 2019,
+	Any Number,
+	A:/Files/PycharmProjects/RL-BCA/Current_Prototype/BEM/ScheduleFiles/ERCOT_DAM_2019.csv,
+	2,
+	1,
+	,
+	,
+	No,
+	60;

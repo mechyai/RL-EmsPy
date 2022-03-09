@@ -1,0 +1,12 @@
+
+!- Custom Schedule File
+Schedule:File,
+	ERCOT DAM 12-Hr Forecast 2019 - 8hr Ahead,
+	Any Number,
+	A:/Files/PycharmProjects/RL-BCA/Current_Prototype/BEM/ScheduleFiles/ERCOT_DAM_12hr_forecast_2019.csv,
+	10,
+	1,
+	,
+	,
+	No,
+	60;

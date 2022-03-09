@@ -1,0 +1,25 @@
+! ************************* CJE *************************
+
+! --- Output all available EMS Actuators ---
+
+Output:EnergyManagementSystem,
+    Verbose,        ! Actuator Availability Dictionary Reporting
+    Verbose,        ! Internal Variable Availability Dictionary Reporting
+    ErrorsOnly;     ! EnergyPlus Runtime Language Debug Output Level
+
+! --- Track EMS Schedules ---
+
+! # used to read building 'open'/'close' status
+EnergyManagementSystem:Sensor,
+    HVACOperationSchd,                      ! Custom Name
+    OfficeSmall HVACOperationSchd,          ! Output:Variable Index Key Name
+    Schedule Value;                         ! Output:Variable Name
+
+
+
+! CJE: Create Custom Schedule Tracker
+! From .edd: (after object creation)
+!   - Ex: EnergyManagementSystem:Actuator Available,REWARD TRACKER,Schedule:Constant,Schedule Value,[ ]
+! 1) create "Schedule:Constant" to input (via actuation) custom sim data
+! 2) create "Output:Variable" to get SQL output for DView
+

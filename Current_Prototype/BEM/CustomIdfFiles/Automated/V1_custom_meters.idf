@@ -1,0 +1,262 @@
+! --- Custom Energy Meters ---
+
+! Meter SQL Output Reporting
+
+Output:Meter:MeterFileOnly,
+  ZN0 HVAC Heating Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN1 HVAC Heating Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN2 HVAC Heating Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN3 HVAC Heating Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN4 HVAC Heating Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN0 HVAC Heating Natural Gas,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN1 HVAC Heating Natural Gas,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN2 HVAC Heating Natural Gas,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN3 HVAC Heating Natural Gas,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN4 HVAC Heating Natural Gas,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN0 HVAC Cooling Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN1 HVAC Cooling Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN2 HVAC Cooling Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN3 HVAC Cooling Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  ZN4 HVAC Cooling Electricity,
+  timestep;
+
+Output:Meter:MeterFileOnly,
+  Solar Generation,
+  hourly;
+
+
+! HVAC HEATING [Electricity, J]
+
+
+Meter:Custom,
+    ZN0 HVAC Heating Electricity,
+    Electricity,                                                !- Fuel Type
+    CORE_ZN ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,              !- Key Name 1
+    Heating Coil Electricity Energy,                            !- Output Variable or Meter Name 1
+    CORE_ZN ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,              !- Key Name 2
+    Heating Coil Defrost Electricity Energy,                    !- Output Variable or Meter Name 2
+    CORE_ZN ZN HP HTG COIL 26 CLG KBTU/HR 8.0HSPF,              !- Key Name 3
+    Heating Coil Crankcase Heater Electricity Energy,           !- Output Variable or Meter Name 3
+    CORE_ZN ZN PSZ-AC-1 GAS BACKUP HTG COIL,                    !- Key Name 4
+    Heating Coil Electricity Energy,                            !- Output Variable or Meter Name 4
+    CORE_ZN ZN PSZ-AC-1 UNITARY HP,                             !- Key Name 5
+    Unitary System Heating Ancillary Electricity Energy,        !- Output Variable or Meter Name 5
+    CORE_ZN ZN PSZ-AC-1 FAN,                                    !- Key Name 6
+    Fan Electricity Energy;                                     !- Output Variable or Meter Name 6
+
+Meter:Custom,
+    ZN1 HVAC Heating Electricity,
+    Electricity,
+    PERIMETER_ZN_1 ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_1 ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Defrost Electricity Energy,
+    PERIMETER_ZN_1 ZN HP HTG COIL 27 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Crankcase Heater Electricity Energy,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 GAS BACKUP HTG COIL,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 UNITARY HP,
+    Unitary System Heating Ancillary Electricity Energy,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 FAN,
+    Fan Electricity Energy;
+
+
+Meter:Custom,
+    ZN2 HVAC Heating Electricity,
+    Electricity,
+    PERIMETER_ZN_2 ZN HP HTG COIL 21 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_2 ZN HP HTG COIL 21 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Defrost Electricity Energy,
+    PERIMETER_ZN_2 ZN HP HTG COIL 21 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Crankcase Heater Electricity Energy,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 GAS BACKUP HTG COIL,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 UNITARY HP,
+    Unitary System Heating Ancillary Electricity Energy,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 FAN,
+    Fan Electricity Energy;
+
+
+Meter:Custom,
+    ZN3 HVAC Heating Electricity,
+    Electricity,
+    PERIMETER_ZN_3 ZN HP HTG COIL 23 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_3 ZN HP HTG COIL 23 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Defrost Electricity Energy,
+    PERIMETER_ZN_3 ZN HP HTG COIL 23 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Crankcase Heater Electricity Energy,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 GAS BACKUP HTG COIL,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 UNITARY HP,
+    Unitary System Heating Ancillary Electricity Energy,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 FAN,
+    Fan Electricity Energy;
+
+
+Meter:Custom,
+    ZN4 HVAC Heating Electricity,
+    Electricity,
+    PERIMETER_ZN_4 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_4 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Defrost Electricity Energy,
+    PERIMETER_ZN_4 ZN HP HTG COIL 24 CLG KBTU/HR 8.0HSPF,
+    Heating Coil Crankcase Heater Electricity Energy,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 GAS BACKUP HTG COIL,
+    Heating Coil Electricity Energy,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 UNITARY HP,
+    Unitary System Heating Ancillary Electricity Energy,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 FAN,
+    Fan Electricity Energy;
+
+
+! HVAC HEATING [Natural Gas, J]
+
+
+Meter:Custom,
+    ZN0 HVAC Heating Natural Gas,
+    NaturalGas,                                        !- Fuel Type
+    CORE_ZN ZN PSZ-AC-1 GAS BACKUP HTG COIL,            !- Key Name 1
+    Heating Coil NaturalGas Energy,                     !- Output Variable or Meter Name 1
+    CORE_ZN ZN PSZ-AC-1 GAS BACKUP HTG COIL,            !- Key Name 2
+    Heating Coil Ancillary NaturalGas Energy;           !- Output Variable or Meter Name 2
+
+Meter:Custom,
+    ZN1 HVAC Heating Natural Gas,
+    NaturalGas,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 GAS BACKUP HTG COIL,
+    Heating Coil NaturalGas Energy,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 GAS BACKUP HTG COIL,
+    Heating Coil Ancillary NaturalGas Energy;
+
+Meter:Custom,
+    ZN2 HVAC Heating Natural Gas,
+    NaturalGas,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 GAS BACKUP HTG COIL,
+    Heating Coil NaturalGas Energy,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 GAS BACKUP HTG COIL,
+    Heating Coil Ancillary NaturalGas Energy;
+
+Meter:Custom,
+    ZN3 HVAC Heating Natural Gas,
+    NaturalGas,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 GAS BACKUP HTG COIL,
+    Heating Coil NaturalGas Energy,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 GAS BACKUP HTG COIL,
+    Heating Coil Ancillary NaturalGas Energy;
+
+Meter:Custom,
+    ZN4 HVAC Heating Natural Gas,
+    NaturalGas,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 GAS BACKUP HTG COIL,
+    Heating Coil NaturalGas Energy,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 GAS BACKUP HTG COIL,
+    Heating Coil Ancillary NaturalGas Energy;
+
+
+! HVAC COOLING [Electricity, J]
+
+Meter:Custom,
+    ZN0 HVAC Cooling Electricity,
+    Electricity,                                                        !- Fuel Type
+    CORE_ZN ZN PSZ-AC-1 1SPD DX HP CLG COIL 26KBTU/HR 14.0SEER,         !- Key Name 1
+    Cooling Coil Electricity Energy,                                    !- Output Variable or Meter Name 1
+    CORE_ZN ZN PSZ-AC-1 UNITARY HP,                                     !- Key Name 2
+    Unitary System Cooling Ancillary Electricity Energy,                !- Output Variable or Meter Name 2
+    CORE_ZN ZN PSZ-AC-1 FAN,                                            !- Key Name 3
+    Fan Electricity Energy;                                             !- Output Variable or Meter Name 3
+
+Meter:Custom,
+    ZN1 HVAC Cooling Electricity,
+    Electricity,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 1SPD DX HP CLG COIL 27KBTU/HR 14.0SEER,
+    Cooling Coil Electricity Energy,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 UNITARY HP,
+    Unitary System Cooling Ancillary Electricity Energy,
+    PERIMETER_ZN_1 ZN PSZ-AC-2 FAN,
+    Fan Electricity Energy;
+
+
+Meter:Custom,
+    ZN2 HVAC Cooling Electricity,
+    Electricity,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 1SPD DX HP CLG COIL 21KBTU/HR 14.0SEER,
+    Cooling Coil Electricity Energy,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 UNITARY HP,
+    Unitary System Cooling Ancillary Electricity Energy,
+    PERIMETER_ZN_2 ZN PSZ-AC-3 FAN,
+    Fan Electricity Energy;
+
+
+Meter:Custom,
+    ZN3 HVAC Cooling Electricity,
+    Electricity,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 1SPD DX HP CLG COIL 23KBTU/HR 14.0SEER,
+    Cooling Coil Electricity Energy,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 UNITARY HP,
+    Unitary System Cooling Ancillary Electricity Energy,
+    PERIMETER_ZN_3 ZN PSZ-AC-4 FAN,
+    Fan Electricity Energy;
+
+
+Meter:Custom,
+    ZN4 HVAC Cooling Electricity,
+    Electricity,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 1SPD DX HP CLG COIL 24KBTU/HR 14.0SEER,
+    Cooling Coil Electricity Energy,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 UNITARY HP,
+    Unitary System Cooling Ancillary Electricity Energy,
+    PERIMETER_ZN_4 ZN PSZ-AC-5 FAN,
+    Fan Electricity Energy;
+
+! PV Solar Generation [Electricity, J]
+
+Meter:Custom,
+    Solar Generation,
+    Electricity,
+    Generator Photovoltaic 1,                           !- Key Name 1
+    Generator Produced DC Electricity Energy;           !- Output Variable or Meter Name 1

@@ -1,0 +1,32 @@
+&location
+City = 'Snyder'
+StateProv = 'Texas'
+Country = 'USA'
+InLat = 32.7782
+InLong = -100
+InTime = -6
+InElev = 131
+InWMO = '722580'
+/
+&miscdata
+Comments1 = '2019 Hourly Data from Visual Crossing, for Snyder TX in metric units'
+Comments2 = 'CSV format conversion to EPW'
+SourceData = 'https://www.visualcrossing.com/weather/weather-data-services#'
+/
+&wthdata
+InputFileType = 'CUSTOM'
+NumInHour = 1
+InFormat = 'DELIMITED'
+DecimalSymbolChar = '.'
+DateSeparator = '/'
+DelimiterChar = ' '
+DataElements = datasource,date,hh:mm,drybulb,dewpoint,relhum,snowdepth,windspd,winddir,totskycvr,visibility
+DataUnits = x,'mm/dd/yyyy','hh:mm','c','c','%','cm','m/s','deg',x,'km'
+DataConversionFactors = 1,1,1,1,1,1,1,1,1,1,1
+/
+&datacontrol
+NumRecordsToSkip = 1
+MissingDataAction = 'DEFAULT'
+GenerateSolarRadiationWarnings = 'YES'
+GenerateIlluminanceWarnings = 'YES'
+/
