@@ -10,7 +10,7 @@ import ErcotRTM_fromCSV as rtm
 import ErcotDAM_fromCSV as dam
 import ErcotFuelMix_fromCSV as fmix
 
-from EmsPy import IDFeditor
+from emspy import idf_editor
 
 # -- OUTPUT PARAMS --
 # metadata
@@ -39,7 +39,7 @@ def rtm_schedule_file():
     idf_save_file = save_schedule_file_idf + file_out_rtm_name + '.idf'
     output_rtm_csv = save_schedule_file_csv + file_out_rtm_name + '.csv'
     rtm.to_csv_schedule_file(dt_rtm_df, output_rtm_csv)
-    IDFeditor.create_schedule_file(output_rtm_csv, idf_save_file, f'ERCOT RTM {year}', 2, 1, min_per_rtp)
+    idf_editor.create_schedule_file(output_rtm_csv, idf_save_file, f'ERCOT RTM {year}', 2, 1, min_per_rtp)
 
     return dt_rtm_df
 
@@ -60,7 +60,7 @@ def dam_schedule_file():
     idf_save_file = save_schedule_file_idf + file_out_dam_name + '.idf'
     output_rtm_csv = save_schedule_file_csv + file_out_dam_name + '.csv'
     dam.to_csv_schedule_file(dt_dam_df, output_rtm_csv)
-    IDFeditor.create_schedule_file(output_rtm_csv, idf_save_file, f'ERCOT DAM {year}', 2, 1, min_per_dmp)
+    idf_editor.create_schedule_file(output_rtm_csv, idf_save_file, f'ERCOT DAM {year}', 2, 1, min_per_dmp)
 
     return dt_dam_df
 
@@ -97,8 +97,8 @@ def dam_forecast_schedule_file():
     dam.to_csv_schedule_file(forecast_df, output_dap_csv)
     for h in range(12):
         idf_save_file = save_schedule_file_idf + file_out_dam_name + f'_{h}hr_ahead.idf'
-        IDFeditor.create_schedule_file(output_dap_csv, idf_save_file, f'ERCOT DAM 12-Hr Forecast {year} - {h}hr Ahead',
-                                       h + 2, 1, min_per_dmp)
+        idf_editor.create_schedule_file(output_dap_csv, idf_save_file, f'ERCOT DAM 12-Hr Forecast {year} - {h}hr Ahead',
+                                        h + 2, 1, min_per_dmp)
 
     return forecast_df
 
@@ -122,8 +122,8 @@ def fuel_mix_file():
     for fuel in fuel_types:
         fuel_index = fuel_types.index(fuel) + 2  # get index of specific fuel of interest, +2 time & Python 0 indexing
         idf_save_file = save_schedule_file_idf + file_out_fmix_name + f'_{fuel}.idf'
-        IDFeditor.create_schedule_file(output_fmix_csv, idf_save_file, f'ERCOT FMIX {year} - {fuel}', fuel_index, 1,
-                                       min_per_fmix)
+        idf_editor.create_schedule_file(output_fmix_csv, idf_save_file, f'ERCOT FMIX {year} - {fuel}', fuel_index, 1,
+                                        min_per_fmix)
 
     return fmix_df
 

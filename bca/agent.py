@@ -3,15 +3,15 @@ import numpy as np
 
 import torch
 
-from BCA import bdq
-from BCA import mdpmanager
+from bca import bdq
+from bca import mdpmanager
 
-from EmsPy import emspy
+from emspy import BcaEnv
 
 
 class Agent:
     def __init__(self,
-                 sim: emspy.BcaEnv,
+                 sim: BcaEnv,
                  mdp: mdpmanager.MdpManager,
                  dqn_model: bdq.BranchingDQN,
                  policy: bdq.EpsilonGreedyStrategy,
@@ -134,7 +134,7 @@ class Agent:
         print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
 
         # -- TRACK REWARD --
-        return self.reward  # return reward for EmsPy pd.df tracking
+        return self.reward  # return reward for emspy pd.df tracking
 
     def act_heat_cool_off(self):
         """

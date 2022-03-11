@@ -127,7 +127,7 @@ def create_schedule_file(csv_file_path: str, idf_output_file: str,
     return 0
 
 
-def change_timestep(ts: int, idf_file_path: str):
+def change_simulation_timestep(ts: int, idf_file_path: str):
     # TODO
     pass
 

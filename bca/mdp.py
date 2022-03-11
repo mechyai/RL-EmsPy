@@ -1,5 +1,6 @@
-from EmsPy import utils
-from BCA import mdpmanager
+from emspy import utils
+
+from mdpmanager import MdpManager
 
 
 # -- All encoding/normalization functions below. MUST TAKE value of element as first argument --
@@ -35,8 +36,8 @@ def digitize_bool(value: bool):
 
 # ENCODING PARAMS
 # indoor temp bounds, IDD - C, -70-70
-indoor_temp_max = utils.f_to_c(85)
-indoor_temp_min = utils.f_to_c(60)
+indoor_temp_max = 30
+indoor_temp_min = 15
 # electricity
 # PV_gen_max =
 
@@ -165,7 +166,7 @@ tc_actuators = {
 
 
 def generate_mdp():
-    mdp_instance = mdpmanager.MdpManager()
+    mdp_instance = MdpManager()
 
     # compile all ToCs and add to MDP class
     master_toc = {'intvar': tc_intvars, 'var': tc_vars, 'meter': tc_meters, 'weather': tc_weather,

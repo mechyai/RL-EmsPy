@@ -5,8 +5,8 @@ import torch
 
 # import openstudio  # ver 3.2.0 !pip list
 
-from BCA import agent, bdq, mdp
-from EmsPy import emspy, IDFeditor
+from bca import agent, bdq, mdp
+from emspy import emspy_manager, idf_editor
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
@@ -17,7 +17,7 @@ ep_path = 'A:/Programs/EnergyPlusV9-5-0/'
 # IDF File / Modification Paths
 idf_file_name = r'/IdfFiles/BEM_5z_V1.idf'
 idf_final_file = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM/BEM_5z_V1.idf'
-os_folder = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM'
+os_folder = r'A:/Files/PycharmProjects/RL-emspy/Current_Prototype/BEM'
 idf_file_base = os_folder + idf_file_name
 # Weather Path
 ep_weather_path = os_folder + r'/WeatherFiles/EPW/DallasTexas_2019CST.epw'
@@ -41,23 +41,23 @@ for key, values in data_tracking.items():
 # -- Automated IDF Modification --
 year = 2019
 # create final file from IDF base
-IDFeditor.append_idf(idf_file_base, r'BEM/CustomIdfFiles/Automated/V1_IDF_modifications.idf', idf_final_file)
+idf_editor.append_idf(idf_file_base, r'BEM/CustomIdfFiles/Automated/V1_IDF_modifications.idf', idf_final_file)
 # daylight savings & holidays
 # IDFeditor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/TEXAS_CST_Daylight_Savings_{year}.idf')
 # add Schedule:Files
-IDFeditor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_RTM_{year}.idf')  # RTP
-IDFeditor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_FMIX_{year}_Wind.idf')  # FMIX, wind
-IDFeditor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_FMIX_{year}_Total.idf')  # FMIX, total
+idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_RTM_{year}.idf')  # RTP
+idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_FMIX_{year}_Wind.idf')  # FMIX, wind
+idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_FMIX_{year}_Total.idf')  # FMIX, total
 for h in range(12):  # DAM 12 hr forecast
-    IDFeditor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_DAM_12hr_forecast_{year}_{h}hr_ahead.idf')
+    idf_editor.append_idf(idf_final_file, f'BEM/CustomIdfFiles/Automated/ERCOT_DAM_12hr_forecast_{year}_{h}hr_ahead.idf')
 # add Custom Meters
-IDFeditor.append_idf(idf_final_file, r'BEM/CustomIdfFiles/Automated/V1_custom_meters.idf')
+idf_editor.append_idf(idf_final_file, r'BEM/CustomIdfFiles/Automated/V1_custom_meters.idf')
 # add Custom Data Tracking IDF Objs (reference ToC of Actuators)
 for _, value in data_tracking.items():
-    IDFeditor.insert_custom_data_tracking(value[2], idf_final_file, value[3])
+    idf_editor.insert_custom_data_tracking(value[2], idf_final_file, value[3])
 
 # -- Simulation Params --
-cp = emspy.EmsPy.available_calling_points[6]  # 5-15 valid for timestep loop
+cp = emspy_manager.EmsPy.available_calling_points[6]  # 5-15 valid for timestep loop
 timesteps = 60
 
 # -- Agent Params --
@@ -160,9 +160,9 @@ for i, study in enumerate(study_params):
             hyperparameter_dict[param_name] = param_value
 
         # -- Create Building Energy Simulation Instance --
-        sim = emspy.BcaEnv(ep_path, idf_final_file, timesteps,
-                           my_mdp.tc_var, my_mdp.tc_intvar, my_mdp.tc_meter,
-                           my_mdp.tc_actuator, my_mdp.tc_weather)
+        sim = emspy_manager.BcaEnv(ep_path, idf_final_file, timesteps,
+                                   my_mdp.tc_var, my_mdp.tc_intvar, my_mdp.tc_meter,
+                                   my_mdp.tc_actuator, my_mdp.tc_weather)
 
         # -- Instantiate RL Agent --
         my_agent = agent.Agent(sim, my_mdp, bdq_model, policy, experience_replay, learning_loop=1)

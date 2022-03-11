@@ -1,7 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/BEM/BEM_5z_Prototype_PV_V1" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/BEM/BEM_5z_Prototype_PV_V2" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/BEM/BEM_5z_Prototype_PV_V2_AMY" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/BEM/BEM_5z_Prototype_PV_V2_AMY_alwayson" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/BEM/BEM_5z_Prototype_V1" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/20 Epoch 2 Deadband Performance Test" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Batch Size vs Target Update Freq" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Discount Factor" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220228_2248" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220301_2124" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220302_2254" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_0947" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_1347" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_1716" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_1921" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_2135" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_2223" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_2305" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220303_2339" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220304_0018" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220304_1015" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220304_1018" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220304_1426" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220304_1731" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220304_1942" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220305_1902" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220306_0411" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220307_2304" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220309_2159" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220310_1239" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220310_1257" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220310_1530" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220310_1905" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220310_2359" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Exp_20220311_1237" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/First RTP Performance Test" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/First Shared Layer Size - Grad Rescaling" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Frist test fixed setpoint actions" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Learning rate" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/Performance Test - 3c steps - advantage size 48" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Tuning_Data/RTP Performance Test 3C Step" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/out" />
+      <excludeFolder url="file://$MODULE_DIR$/Current_Prototype/Output_Saved" />
+    </content>
     <orderEntry type="jdk" jdkName="Python 3.8 (bca_torch) (3)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
