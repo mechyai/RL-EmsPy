@@ -15,7 +15,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # E+ Download Path
 ep_path = 'A:/Programs/EnergyPlusV9-5-0/'
 # IDF File / Modification Paths
-idf_file_name = r'/IdfFiles/BEM_5z_V1_test.idf'  # ***********************************
+idf_file_name = r'/IdfFiles/BEM_5z_V1.idf'  # ***********************************
 idf_final_file = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM/BEM_5z_V1.idf'
 os_folder = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM'
 idf_file_base = os_folder + idf_file_name
@@ -97,7 +97,7 @@ hyperparameter_dict = {
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 2,
+    'epochs': 5,
     'run_benchmark': True,
     'exploit_final_epoch': True,
     'save_model': False,
@@ -156,7 +156,7 @@ for i, study in enumerate(study_params):
     for epoch in range(experiment_params_dict['epochs']):  # train under same condition
 
         time_start = time.time()
-        model_name = f'bdq_{time.strftime("%Y%m%d_%H%M")}.pt'
+        model_name = f'bdq_{time.strftime("%Y%m%d_%H%M")}_{epoch}.pt'
 
         # -- Adjust Study Params for Epoch --
         for param_name, param_value in epoch_params.items():
@@ -236,17 +236,17 @@ for i, study in enumerate(study_params):
                 plt.close('all')
 
                 with open(results_file_path, 'a+') as file:
-                    file.write(f'\n\n\n\n Experiment Descp: {experiment_params_dict["experiment_title"]}')
-                    file.write(f'\n\n\n\n Model Name: {model_name}')
+                    file.write(f'\n\n Experiment Descp: {experiment_params_dict["experiment_title"]}')
+                    file.write(f'\n\n Model Name: {model_name}')
                     file.write(f'\nReward Plot Name: {plot_reward_name}')
                     file.write(f'\n\tTime Train = {round(time_start - time.time(), 2) / 60} mins')
-                    file.write(f'\n\n\t*Epochs trained = {epoch}')
+                    file.write(f'\n\t*Epochs trained = {epoch}')
                     file.write(f'\n\t******* Cumulative Reward = {cumulative_reward}')
                     file.write(f'\n\t*Performance Metrics:')
                     file.write(f'\n\t\tDiscomfort Metric = {my_agent.comfort_dissatisfaction_total}')
                     file.write(f'\n\t\tRTP HVAC Cost Metric = {my_agent.hvac_rtp_costs_total}')
-                    file.write(f'\n\tState Space: {my_agent.state_var_names}')
-                    file.write('\n\tHyperparameters:')
+                    file.write(f'\n\n\tState Space: {my_agent.state_var_names}')
+                    file.write('\n\n\tHyperparameters:')
                     for key, val in hyperparameter_dict.items():
                         file.write(f'\n\t\t{key}: {val}')
                     file.write(f'\n\nModel Architecture:\n{bdq_model.policy_network}')

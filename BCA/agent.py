@@ -258,7 +258,9 @@ class Agent:
 
     def _reward(self):
         """Reward function - per component, per zone."""
-        # TODO add some sort of normalization and lambda
+        # TODO add some sort of normalization
+        lambda_comfort = 1
+        lambda_rtp = 0.01
 
         n_zones = self.bdq.action_branches
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
@@ -301,6 +303,7 @@ class Agent:
             # MSE penalty for temps above and below comfortable bounds
             reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
                      - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+            reward *= lambda_comfort
 
             reward_per_component = np.append(reward_per_component, reward)
 
@@ -317,7 +320,7 @@ class Agent:
             heating_gas_since_last_interaction = np.asarray(
                 self.sim.get_ems_data([f'{zone_i}_heating_gas'], interaction_span)
             )
-            heating_energy = heating_gas_since_last_interaction + heating_electricity_since_last_interaction
+            heating_energy = heating_electricity_since_last_interaction + heating_gas_since_last_interaction
 
             cooling_energy = np.asarray(
                 self.sim.get_ems_data([f'{zone_i}_cooling_electricity'], interaction_span)
@@ -326,11 +329,14 @@ class Agent:
             # timestep-wise RTP cost, not accounting for energy-usage, only that energy was used
             cooling_factor = 1
             heating_factor = 1
+
+            # only account for heating or cooling actions, ignore default fan that operates during day always & for both
             cooling_timesteps_cost = - cooling_factor * np.multiply(cooling_energy > heating_energy,
                                                                     rtp_since_last_interaction)
             heating_timesteps_cost = - heating_factor * np.multiply(heating_energy > cooling_energy,
                                                                     rtp_since_last_interaction)
             reward = (cooling_timesteps_cost + heating_timesteps_cost).sum()
+            reward *= lambda_rtp
 
             reward_per_component = np.append(reward_per_component, reward)
 
@@ -394,7 +400,8 @@ class Agent:
             uncomfortable_metric += ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() + \
                                     ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
 
-        print(f'\n\tComfort: {uncomfortable_metric}, Cumulative: {self.comfort_dissatisfaction_total}')
+        print(f'\n\tComfort: {round(uncomfortable_metric,2)}, '
+              f'Cumulative: {round(self.comfort_dissatisfaction_total,2)}')
 
         return uncomfortable_metric
 
@@ -437,7 +444,7 @@ class Agent:
             hvac_electricity_costs = np.multiply(total_hvac_electricity, rtp_since_last_interaction)
             rtp_hvac_costs += hvac_electricity_costs.sum()
 
-        print(f'\tRTP: ${rtp_hvac_costs}, Cumulative: ${self.hvac_rtp_costs_total}')
+        print(f'\tRTP: ${round(rtp_hvac_costs,2)}, Cumulative: ${round(self.hvac_rtp_costs_total + rtp_hvac_costs,2)}')
 
         return rtp_hvac_costs
 

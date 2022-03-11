@@ -1076,14 +1076,14 @@ class BcaEnv(EmsPy):
                 return_df[df_name] = df
 
                 # create complete DF of all default vars with only 1 set of time/index columns
-                if df_name == 'reward' and len(self.rewards) == self.t_datetimes:
+                if len(self.rewards) == self.t_datetimes:
                     # include reward to ALL Df if only its the same size
                     if all_df.empty:
                         all_df = df.copy(deep=True)
                     else:
                         # TODO causes issue
                         all_df = pd.merge(all_df, df, on=['Datetime', 'Timestep', 'Calling Point'])
-                else:
+                elif df_name == 'reward':
                     print('*NOTE: Rewards DF will not be included on ALL DF as it is not the same size.')
 
                 if df_name in df_names:

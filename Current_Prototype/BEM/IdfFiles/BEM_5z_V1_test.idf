@@ -2416,7 +2416,7 @@ RunPeriod,
   1,                                      !- Begin Day of Month
   2019,                                   !- Begin Year
   1,                                     !- End Month
-  5,                                     !- End Day of Month
+  2,                                     !- End Day of Month
   2019,                                   !- End Year
   Tuesday,                                !- Day of Week for Start Day
   No,                                     !- Use Weather File Holidays and Special Days
