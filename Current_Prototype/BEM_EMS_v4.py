@@ -175,7 +175,9 @@ for i, study in enumerate(study_params):
         if experiment_params_dict['run_benchmark']:
             experiment_params_dict['run_benchmark'] = False
             my_agent.learning = False  # TODO why does benchmark take so long without learning
-            sim.set_calling_point_and_callback_function(cp, my_agent.observe, None, True)
+            sim.set_calling_point_and_callback_function(cp, my_agent.observe, None, True,
+                                                        experiment_params_dict['interaction_ts_freq'],
+                                                        experiment_params_dict['interaction_ts_freq'])
         # Experiment
         else:
             my_agent.learning = True
@@ -241,7 +243,7 @@ for i, study in enumerate(study_params):
                     file.write(f'\n\n\t*Epochs trained = {epoch}')
                     file.write(f'\n\t******* Cumulative Reward = {cumulative_reward}')
                     file.write(f'\n\t*Performance Metrics:')
-                    file.write(f'\n\t\tDiscomfort Metric = {my_agent.comfort_disastisfaction_total}')
+                    file.write(f'\n\t\tDiscomfort Metric = {my_agent.comfort_dissatisfaction_total}')
                     file.write(f'\n\t\tRTP HVAC Cost Metric = {my_agent.hvac_rtp_costs_total}')
                     file.write(f'\n\tState Space: {my_agent.state_var_names}')
                     file.write('\n\tHyperparameters:')

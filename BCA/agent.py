@@ -83,15 +83,10 @@ class Agent:
         self.once = True
 
     def observe(self):
-        # SKIP FIRST TIMESTEP ???
-        if self.once:
-            self.once = False
-            return 0
-
         # -- FETCH/UPDATE SIMULATION DATA --
         time = self.sim.get_ems_data(['t_datetimes'])
         vars = self.mdp.update_ems_value(self.vars, self.sim.get_ems_data(self.mdp.get_ems_names(self.vars)))
-        meters = self.mdp.update_ems_value(self.meters, self.sim.get_ems_data(self.mdp.get_ems_names(self.meters)))
+        # meters = self.mdp.update_ems_value(self.meters, self.sim.get_ems_data(self.mdp.get_ems_names(self.meters)))
         weather = self.mdp.update_ems_value(self.weather, self.sim.get_ems_data(self.mdp.get_ems_names(self.weather)))
 
         print(f'\n\n{str(time)}')  # \n\n\tVars: {vars}\n\tMeters: {meters}\n\tWeather: {weather}')
@@ -130,13 +125,13 @@ class Agent:
         self.hvac_rtp_costs_total += self.hvac_rtp_costs
 
         # -- DO ONCE --
-        # if self.once:
-        #     self.state_var_names = list(vars.keys()) + list(weather.keys())
-        #     self.once = False
+        if self.once:
+            self.state_var_names = list(vars.keys()) + list(weather.keys())
+            self.once = False
 
         # -- REPORTING --
         # self._report_time()  # time
-        print(f'\n\tReward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
+        print(f'\n\t*Reward: {round(self.reward, 2)}, Cumulative: {round(self.reward_sum, 2)}')
 
         # -- TRACK REWARD --
         return self.reward  # return reward for EmsPy pd.df tracking
@@ -269,19 +264,12 @@ class Agent:
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
-        # interaction_frequency = min(self.interaction_frequency, self.current_step)
         interaction_span = range(self.interaction_frequency)
 
         # COMFORT
         temp_schedule = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
-        # if not isinstance(temp_schedule, list):
-        #     temp_schedule = [temp_schedule]  # handle edge case at beginning of sim
-        temp_bounds = []
-        for schedule_value in temp_schedule:
-            if schedule_value == 1:  # during operating hours
-                temp_bounds.append(self.indoor_temp_ideal_range)
-            else:
-                temp_bounds.append(self.indoor_temp_unoccupied_range)
+        temp_bounds = [self.indoor_temp_ideal_range if temp_schedule[i] == 1 else self.indoor_temp_unoccupied_range
+                       for i in interaction_span]
         temp_bounds = np.asarray(temp_bounds)
 
         # $RTP
@@ -305,12 +293,10 @@ class Agent:
             temp_bounds_cold = temp_bounds[too_cold_temps != 0]
             too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
 
-
             too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
                                          zone_temps_since_last_interaction)
             temp_bounds_warm = temp_bounds[too_warm_temps != 0]
             too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
-
 
             # MSE penalty for temps above and below comfortable bounds
             reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
@@ -365,10 +351,6 @@ class Agent:
         elif aggregate_type == 'mean':
             return np.array(list(self.reward_dict.values())).mean()
 
-    def _is_terminal(self):
-        """Determines whether the current state is a terminal state or not. Dictates TD update values."""
-        return 0
-
     def _get_comfort_results(self):
         """
         For each timestep, and each zone, we calculate the weighted sum of temps outside the comfortable bounds.
@@ -381,15 +363,9 @@ class Agent:
         controlled_zone_names = [f'zn{zone_i}' for zone_i in range(n_zones)]
 
         # Temp Bounds
-        temp_schedule = np.asarray(
-            self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
-        )
-        temp_bounds = []
-        for schedule_value in temp_schedule:
-            if schedule_value == 1:  # during operating hours
-                temp_bounds.append(self.indoor_temp_ideal_range)
-            else:
-                temp_bounds.append(self.indoor_temp_unoccupied_range)
+        temp_schedule = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
+        temp_bounds = [self.indoor_temp_ideal_range if temp_schedule[i] == 1 else self.indoor_temp_unoccupied_range
+                       for i in interaction_span]
         temp_bounds = np.asarray(temp_bounds)
 
         # Per Controlled Zone
@@ -416,7 +392,9 @@ class Agent:
 
             # MSE penalty for temps above and below comfortable bounds
             uncomfortable_metric += ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() + \
-                         ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+                                    ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
+
+        print(f'\n\tComfort: {uncomfortable_metric}, Cumulative: {self.comfort_dissatisfaction_total}')
 
         return uncomfortable_metric
 
@@ -459,7 +437,13 @@ class Agent:
             hvac_electricity_costs = np.multiply(total_hvac_electricity, rtp_since_last_interaction)
             rtp_hvac_costs += hvac_electricity_costs.sum()
 
+        print(f'\tRTP: ${rtp_hvac_costs}, Cumulative: ${self.hvac_rtp_costs_total}')
+
         return rtp_hvac_costs
+
+    def _is_terminal(self):
+        """Determines whether the current state is a terminal state or not. Dictates TD update values."""
+        return 0
 
     def _report_daily(self):
         self.time = self.sim.get_ems_data('t_datetimes')
