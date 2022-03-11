@@ -1,7 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import time
-# import torch
+import torch
 
 # import openstudio  # ver 3.2.0 !pip list
 
@@ -69,12 +69,12 @@ interaction_ts_frequency = 10
 hyperparameter_dict = {
     # --- BDQ ---
     # architecture
-    'observation_dim': 13,
+    'observation_dim': 23,
     'action_branches': action_branches,  # n building zones
-    'action_dim': 3,
+    'action_dim': 5,
     'shared_network_size': [96, 96],
-    'value_stream_size': [32],
-    'advantage_streams_size': [16],
+    'value_stream_size': [48],
+    'advantage_streams_size': [48],
     # hyperparameters
     'target_update_freq': 250,  # ***
     'learning_rate': 0.005,  # **
@@ -97,21 +97,24 @@ hyperparameter_dict = {
 
 # -- Experiment Params --
 experiment_params_dict = {
-    'epochs': 21,
+    'epochs': 15,
+    'run_benchmark': True,
+    'exploit_final_epoch': True,
     'save_model': False,
+    'save_model_final_epoch': True,
     'save_results': True,
     'reward_plot_title': '',
-    'experiment_title': 'Performance test with building open vs close sched and temps BUT changed setpoint step to 3 deg c',
+    'experiment_title': 'Changed action encoding, 5 setpoints, Added RTP, Added 2x Performance Metrics Results, Added Control',
     'experiment_notes': '',
     'interaction_ts_freq': interaction_ts_frequency,  # interaction ts intervals
     'load_model': ''
 }
 
 # --- Study Parameters ---
-study_params = [{'gamma': 0.6}]
+study_params = [{}]  # leave empty [{}] for No study
 epoch_params = {}
 
-# -- Run Study --
+# ------------------------------------------------ Run Study ------------------------------------------------
 folder_made = False
 for i, study in enumerate(study_params):
 
@@ -165,21 +168,33 @@ for i, study in enumerate(study_params):
                            my_mdp.tc_actuator, my_mdp.tc_weather)
 
         # -- Instantiate RL Agent --
-        my_agent = agent.Agent(sim, my_mdp, bdq_model, policy, experience_replay, learning_loop=1)
-
-        if epoch == experiment_params_dict['epochs'] - 1:
-            # exploit final
-            my_agent.learning = False
-            policy.start = 0
-            hyperparameter_dict['eps_start'] = 0
-            policy.decay = 0
-            hyperparameter_dict['eps_decay'] = 0
-            experiment_params_dict['save_model'] = True  # save final model
+        my_agent = agent.Agent(sim, my_mdp, bdq_model, policy, experience_replay, interaction_ts_frequency, learning_loop=1)
 
         # -- Set Sim Calling Point(s) & Callback Function(s) --
-        sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act, True,
-                                                    experiment_params_dict['interaction_ts_freq'],
-                                                    experiment_params_dict['interaction_ts_freq'])
+        # Benchmark
+        if experiment_params_dict['run_benchmark']:
+            experiment_params_dict['run_benchmark'] = False
+            my_agent.learning = False  # TODO why does benchmark take so long without learning
+            sim.set_calling_point_and_callback_function(cp, my_agent.observe, None, True)
+        # Experiment
+        else:
+            my_agent.learning = True
+            sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act_strict_setpoints, True,
+                                                        experiment_params_dict['interaction_ts_freq'],
+                                                        experiment_params_dict['interaction_ts_freq'])
+
+        # -- Final Epoch --
+        if epoch == experiment_params_dict['epochs'] - 1:
+            # save final model
+            if experiment_params_dict['save_model_final_epoch']:
+                experiment_params_dict['save_model'] = True
+            # exploit final
+            if experiment_params_dict['exploit_final_epoch']:
+                my_agent.learning = False
+                policy.start = 0
+                hyperparameter_dict['eps_start'] = 0
+                policy.decay = 0
+                hyperparameter_dict['eps_decay'] = 0
 
         # -- Run Sim --
         sim.run_env(ep_weather_path)
@@ -214,16 +229,20 @@ for i, study in enumerate(study_params):
                 torch.save(bdq_model.policy_network.state_dict(), os.path.join(folder, model_name))  # save model
             # save results
             if experiment_params_dict['save_results']:
-                fig.savefig(os.path.join(folder, model_name[:-3]))
+                plot_reward_name = model_name[:-3] + '_reward.png'
+                fig.savefig(os.path.join(folder, plot_reward_name))
                 plt.close('all')
 
                 with open(results_file_path, 'a+') as file:
                     file.write(f'\n\n\n\n Experiment Descp: {experiment_params_dict["experiment_title"]}')
                     file.write(f'\n\n\n\n Model Name: {model_name}')
-                    file.write(f'\nReward Plot Name: {model_name[:-3]}.png')
-                    file.write(f'\n\n\t*Epochs trained: {epoch}')
-                    file.write(f'\n\tTime Train: {round(time_start - time.time(), 2)/60} mins')
-                    file.write(f'\n\t******* Cumulative Reward: {cumulative_reward}')
+                    file.write(f'\nReward Plot Name: {plot_reward_name}')
+                    file.write(f'\n\tTime Train = {round(time_start - time.time(), 2) / 60} mins')
+                    file.write(f'\n\n\t*Epochs trained = {epoch}')
+                    file.write(f'\n\t******* Cumulative Reward = {cumulative_reward}')
+                    file.write(f'\n\t*Performance Metrics:')
+                    file.write(f'\n\t\tDiscomfort Metric = {my_agent.comfort_disastisfaction_total}')
+                    file.write(f'\n\t\tRTP HVAC Cost Metric = {my_agent.hvac_rtp_costs_total}')
                     file.write(f'\n\tState Space: {my_agent.state_var_names}')
                     file.write('\n\tHyperparameters:')
                     for key, val in hyperparameter_dict.items():
