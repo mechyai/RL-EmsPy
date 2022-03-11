@@ -9,7 +9,9 @@ Unmet Hours help forum https://unmethours.com/questions/
 """
 
 import sys
+import operator
 import datetime
+
 import pandas as pd
 import numpy as np
 
@@ -616,7 +618,9 @@ class EmsPy:
                       f'\n\t\t\t- Action Update Freq: [{update_act_freq}]')
 
     def _create_default_dataframes(self):
-        """Creates default dataframes for each EMS data list, for each EMS category (and rewards if included in sim)."""
+        """
+        Creates default dataframes for each EMS data list, for each EMS category (and rewards if included in sim).
+        """
 
         if not self.ems_num_dict:
             return  # no ems dicts created, very unlikely
@@ -641,11 +645,26 @@ class EmsPy:
                 for n in range(self.rewards_cnt):
                     col_names.append('reward' + str(n + 1))
             self.df_reward = pd.DataFrame(self.rewards, columns=col_names)
-            # self.df_reward = self.df_reward.dropna()  # drop NA vals # TODO figure out why these are here at the start
-            # add times to df  # TODO issue with multi obj reward
-            self.df_reward['Datetime'] = self.t_datetimes
-            self.df_reward['Timestep'] = self.timesteps_zone_num
-            self.df_reward['Calling Point'] = self.callback_calling_points
+
+            # TODO figure out why these are here at the start
+            # self.df_reward = self.df_reward.dropna()  # drop NA vals
+
+            len_rewards = len(self.rewards)
+            len_datetimes = len(self.t_datetimes)
+            if len_rewards != len_datetimes:  # IF reward returned less frequently than state updates
+                index_list = list(range(0, len_datetimes, len_datetimes // len_rewards))
+                # Get other data at specific intervals of when reward was captured
+                t_datetimes = list(operator.itemgetter(*index_list)(self.t_datetimes))
+                timesteps_zone_num = list(operator.itemgetter(*index_list)(self.timesteps_zone_num))
+                callback_calling_points = list(operator.itemgetter(*index_list)(self.callback_calling_points))
+            else:
+                t_datetimes = self.t_datetimes
+                timesteps_zone_num = self.timesteps_zone_num
+                callback_calling_points = self.callback_calling_points
+
+            self.df_reward['Datetime'] = t_datetimes
+            self.df_reward['Timestep'] = timesteps_zone_num
+            self.df_reward['Calling Point'] = callback_calling_points
 
     def _init_custom_dataframe_dict(self):
         """Initializes custom EMS metric dataframes attributes at specific calling points & frequencies."""
@@ -1023,7 +1042,7 @@ class BcaEnv(EmsPy):
         if not track:
             self.default_dfs_tracked = False
 
-    def get_df(self, df_names: list=[], to_csv_file: str=''):
+    def get_df(self, df_names: list=None, to_csv_file: str=None):
         """
         Returns selected EMS-type default dataframe based on user's entered ToC(s) or custom DF, or ALL df's by default.
 
@@ -1040,22 +1059,33 @@ class BcaEnv(EmsPy):
             raise Exception('ERROR: Simulation must be run successfully first to fetch data. See EnergyPlus error file,'
                             ' eplusout.err')
 
+        if df_names is None:
+            df_names = []
+        if to_csv_file is None:
+            to_csv_file = ''
+
         all_df = pd.DataFrame()  # merge all into 1 df
         return_df = {}
+
         # handle DEFAULT dfs
-        if self.rewards:  # add reward to iterator if applicable
-            df_default_names = list(self.ems_num_dict.keys()) + ['reward']
-        else:
-            df_default_names = self.ems_num_dict.keys()
+        df_default_names = list(self.ems_num_dict.keys()) + ['reward'] if self.rewards else self.ems_num_dict.keys()
+
         for df_name in df_default_names:  # iterate thru available EMS types
             if df_name in df_names or not df_names:  # specific or ALL dfs
                 df = (getattr(self, 'df_' + df_name))
                 return_df[df_name] = df
+
                 # create complete DF of all default vars with only 1 set of time/index columns
-                if all_df.empty:
-                    all_df = df.copy(deep=True)
+                if df_name == 'reward' and len(self.rewards) == self.t_datetimes:
+                    # include reward to ALL Df if only its the same size
+                    if all_df.empty:
+                        all_df = df.copy(deep=True)
+                    else:
+                        # TODO causes issue
+                        all_df = pd.merge(all_df, df, on=['Datetime', 'Timestep', 'Calling Point'])
                 else:
-                    all_df = pd.merge(all_df, df, on=['Datetime', 'Timestep', 'Calling Point'])  # TODO causes issue
+                    print('*NOTE: Rewards DF will not be included on ALL DF as it is not the same size.')
+
                 if df_name in df_names:
                     df_names.remove(df_name)
 
@@ -1071,14 +1101,17 @@ class BcaEnv(EmsPy):
                     # TODO determine why custom dfs do not add to all_df well, num of indexes is wrong
                 if df_name in df_names:
                     df_names.remove(df_name)
+
         # leftover dfs not fetched and returned
         if df_names:
             raise ValueError(f'ERROR: Either dataframe custom name or default type: {df_names} is not valid or was not'
                              ' collected during simulation.')
         else:
             if to_csv_file:
+                # write DFs to file
                 all_df.to_csv(to_csv_file, index=False)
             return_df['all'] = all_df
+
             return return_df
 
     def run_env(self, weather_file: str):
