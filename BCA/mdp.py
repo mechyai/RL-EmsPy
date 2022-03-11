@@ -9,21 +9,24 @@ def encode_none(value):
     return value
 
 
-def normalize_high_low_strict(value, low: float, high: float):
-    """Input value must be within high and low range to normalize."""
-
-    if high < value < low:
-        raise ValueError(f'Value {value} is great than {high} OR less than {low}')
-    return (value - low) / (high - low)
-
-
-def normalize_high_low_saturate(value: float, low: float, high: float):
-    if value > high:
-        return 1
-    elif value < low:
-        return 0
+def normalize_min_max_strict(value, min: float, max: float):
+    lower = -1
+    upper = 1
+    if max < value < min:
+        raise ValueError(f'Value {value} is great than {max} OR less than {min}. Use saturated version.')
     else:
-        return (value - low) / (high - low)
+        return ((value - min) / (max - min))*(upper - lower) + lower
+
+
+def normalize_min_max_saturate(value: float, min: float, max: float):
+    lower = -1
+    upper = 1
+    if value > max:
+        return upper
+    elif value < min:
+        return lower
+    else:
+        return ((value - min) / (max - min))*(upper - lower) + lower
 
 
 def digitize_bool(value: bool):
@@ -67,25 +70,39 @@ tc_vars = {
     # 'hvac_operation_sched': [('Schedule Value', 'CJE Always ON HVACOperationSchd')],  # is building 'open'/'close'?
     # 'PV_generation': [('Generator Produced DC Electricity Energy', 'Generator Photovoltaic 1')],  # [J] HVAC, Sum
     # Schedule Files
-    'rtp': [('Schedule Value', 'ERCOT RTM 2019'), normalize_high_low_saturate, 0, 500],
-    # 'dap': [('Schedule Value', 'ERCOT DAM 12-Hr Forecast 2019 - 0hr Ahead'), normalize_high_low_saturate, 0, 500],
+    'rtp': [('Schedule Value', 'ERCOT RTM 2019'), normalize_min_max_saturate, 0, 500],
+    'dap0': [('Schedule Value', 'ERCOT DAM 12-Hr Forecast 2019 - 0hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap1': [('Schedule Value', 'ERCOT DAM 12-Hr Forecast 2019 - 1hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap2': [('Schedule Value', 'ERCOT DAM 12-Hr Forecast 2019 - 2hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap3': [('Schedule Value', 'ERCOT DAM 12-Hr Forecast 2019 - 3hr Ahead'), normalize_min_max_saturate, 0, 500],
+    'dap4': [('Schedule Value', 'ERCOT DAM 12-Hr Forecast 2019 - 4hr Ahead'), normalize_min_max_saturate, 0, 500],
     # 'wind_gen': [('Schedule Value', 'ERCOT FMIX 2019 - Wind'), normalize_high_low_strict, 0, None],
     # 'total_gen': [('Schedule Value', 'ERCOT FMIX 2019 - Total')],
-    # Zone 0
-    'zn0_temp': [('Zone Air Temperature', zn0), normalize_high_low_saturate, indoor_temp_min, indoor_temp_max],
+    # -- Zone 0 --
+    'zn0_temp': [('Zone Air Temperature', zn0), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn0_RH': [('Zone Air Relative Humidity', zn0), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
-    # Zone 1
-    'zn1_temp': [('Zone Air Temperature', zn1), normalize_high_low_saturate, indoor_temp_min, indoor_temp_max],
+    'zn0_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn0), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn0_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn0)],
+    # -- Zone 1 --
+    'zn1_temp': [('Zone Air Temperature', zn1), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn1_RH': [('Zone Air Relative Humidity', zn1), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
-    # Zone 2
-    'zn2_temp': [('Zone Air Temperature', zn2), normalize_high_low_saturate, indoor_temp_min, indoor_temp_max],
+    'zn1_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn1), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn1_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn1)],
+    # -- Zone 2 --
+    'zn2_temp': [('Zone Air Temperature', zn2), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn2_RH': [('Zone Air Relative Humidity', zn2), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
-    # Zone 3
-    'zn3_temp': [('Zone Air Temperature', zn3), normalize_high_low_saturate, indoor_temp_min, indoor_temp_max],
+    'zn2_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn2), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn2_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn2)],
+    # -- Zone 3 --
+    'zn3_temp': [('Zone Air Temperature', zn3), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn3_RH': [('Zone Air Relative Humidity', zn3), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
-    # Zone 4
-    'zn4_temp': [('Zone Air Temperature', zn4), normalize_high_low_saturate, indoor_temp_min, indoor_temp_max],
+    'zn3_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn3), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn3_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn3)],
+    # -- Zone 4 --
+    'zn4_temp': [('Zone Air Temperature', zn4), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
     # 'zn4_RH': [('Zone Air Relative Humidity', zn4), normalize_high_low_saturate, utils.f_to_c(0), utils.f_to_c(100)],
+    'zn4_cooling_sp_var': [('Zone Thermostat Cooling Setpoint Temperature', zn4), normalize_min_max_saturate, indoor_temp_min, indoor_temp_max],
+    # 'zn4_heating_sp_var': [('Zone Thermostat Heating Setpoint Temperature', zn4)],
 }
 
 tc_meters = {
@@ -120,14 +137,14 @@ tc_meters = {
 }
 
 tc_weather = {  # used for current and forecasted weather
-    'oa_rh': ['outdoor_relative_humidity', normalize_high_low_saturate, 0, 100],  # IDD - %RH, 0-110
-    'oa_db': ['outdoor_dry_bulb', normalize_high_low_saturate, utils.f_to_c(20), utils.f_to_c(100)],  # IDD - C, -70-70
-    'oa_pa': ['outdoor_barometric_pressure', normalize_high_low_saturate, 90000, 120000],  # IDD - Pa, 31000-120000
+    'oa_rh': ['outdoor_relative_humidity', normalize_min_max_saturate, 0, 100],  # IDD - %RH, 0-110
+    'oa_db': ['outdoor_dry_bulb', normalize_min_max_saturate, utils.f_to_c(20), utils.f_to_c(100)],  # IDD - C, -70-70
+    'oa_pa': ['outdoor_barometric_pressure', normalize_min_max_saturate, 90000, 120000],  # IDD - Pa, 31000-120000
     'sun_up': ['sun_is_up', digitize_bool],  # T/F
     # 'rain': ['is_raining', digitize_bool],  # T/F
     # 'snow': ['is_snowing', digitize_bool],  # T/F
-    'wind_dir': ['wind_direction', normalize_high_low_strict, 0, 360],  # IDD - deg, 0-360
-    'wind_speed': ['wind_speed', normalize_high_low_strict, 0, 400]  # IDD - m/s, 0-40
+    'wind_dir': ['wind_direction', normalize_min_max_strict, 0, 360],  # IDD - deg, 0-360
+    'wind_speed': ['wind_speed', normalize_min_max_strict, 0, 400]  # IDD - m/s, 0-40
 }
 
 # ACTION SPACE (& Auxiliary Control)

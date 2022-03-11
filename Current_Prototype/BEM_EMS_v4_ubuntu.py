@@ -177,7 +177,7 @@ for i, study in enumerate(study_params):
             experiment_params_dict['save_model'] = True  # save final model
 
         # -- Set Sim Calling Point(s) & Callback Function(s) --
-        sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act, True,
+        sim.set_calling_point_and_callback_function(cp, my_agent.observe, my_agent.act_heat_cool_off, True,
                                                     experiment_params_dict['interaction_ts_freq'],
                                                     experiment_params_dict['interaction_ts_freq'])
 

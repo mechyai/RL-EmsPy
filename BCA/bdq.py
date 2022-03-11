@@ -126,7 +126,7 @@ class BranchingDQN(nn.Module):
 
         self.observation_space = observation_dim
         self.action_branches = action_branches
-        self.action_bins = action_dim
+        self.action_dim = action_dim
         self.shared_network_size = shared_network_size
         self.advantage_streams_size = advantage_streams_size
         self.value_stream_size = value_stream_size
@@ -152,7 +152,7 @@ class BranchingDQN(nn.Module):
 
         self.td_target = td_target
 
-    def get_action(self, state_tensor):
+    def get_greedy_action(self, state_tensor):
         x = state_tensor.to(self.device).T  # single action row vector
         with torch.no_grad():
             out = self.policy_network(x).squeeze(0)

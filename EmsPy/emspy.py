@@ -540,7 +540,7 @@ class EmsPy:
                 pass  # catch first iter when no data available
 
             # -- STATE UPDATE & OBSERVATION --
-            if update_state and self.timestep_zone_num_current % update_state_freq == 0:
+            if update_state:
                 # update & append simulation data
                 self._update_time()  # note timing update is first
                 self._update_ems_and_weather_vals(self.ems_names_master_list)  # update sensor/actuator/weather/ vals
@@ -881,7 +881,7 @@ class BcaEnv(EmsPy):
                             f' or EmsPy.ems_master_list & EmsPy.times_master_list for available EMS & '
                             f'timing metrics')
 
-    def get_ems_data(self, ems_metric_list: list, time_rev_index: list = [0]) -> list:
+    def get_ems_data(self, ems_metric_list: list, time_rev_index=0) -> list:
         """
         This takes desired EMS metric(s) (or type) & returns the entire current data set(s) OR at specific time indices.
 
@@ -909,7 +909,7 @@ class BcaEnv(EmsPy):
         if len(ems_metric_list) == 1:
             single_metric = True
         # time indexes
-        if type(time_rev_index) is not list:  # assuming single time
+        if type(time_rev_index) is not list and type(time_rev_index) is not range:  # assuming single time
             time_rev_index = [time_rev_index]
         if len(time_rev_index) == 1:
             single_val = True
@@ -921,7 +921,7 @@ class BcaEnv(EmsPy):
         if ems_type in self.ems_num_dict and single_metric:
             # reassign entire EMS type list
             if ems_type == 'time':
-                ems_metric_list = self.times_master_list
+                ems_metric_list = self.available_timing_metrics
             else:
                 ems_metric_list = list(getattr(self, 'tc_' + ems_metric_list[0]).keys())
             if len(ems_metric_list) > 1:
