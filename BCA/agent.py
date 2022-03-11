@@ -72,9 +72,9 @@ class Agent:
         self.bdq = dqn_model
 
         # -- PERFORMANCE RESULTS --
-        self.comfort_disastisfaction = 0
+        self.comfort_dissatisfaction = 0
         self.hvac_rtp_costs = 0
-        self.comfort_disastisfaction_total = 0
+        self.comfort_dissatisfaction_total = 0
         self.hvac_rtp_costs_total = 0
 
         # -- Misc. --
@@ -83,6 +83,11 @@ class Agent:
         self.once = True
 
     def observe(self):
+        # SKIP FIRST TIMESTEP ???
+        if self.once:
+            self.once = False
+            return 0
+
         # -- FETCH/UPDATE SIMULATION DATA --
         time = self.sim.get_ems_data(['t_datetimes'])
         vars = self.mdp.update_ems_value(self.vars, self.sim.get_ems_data(self.mdp.get_ems_names(self.vars)))
@@ -119,15 +124,15 @@ class Agent:
         self.current_step += 1
 
         # -- PERFORMANCE RESULTS --
-        self.comfort_disastisfaction = self._get_comfort_results()
+        self.comfort_dissatisfaction = self._get_comfort_results()
         self.hvac_rtp_costs = self._get_rtp_hvac_cost_results()
-        self.comfort_disastisfaction_total += self.comfort_disastisfaction
+        self.comfort_dissatisfaction += self.comfort_dissatisfaction
         self.hvac_rtp_costs_total += self.hvac_rtp_costs
 
         # -- DO ONCE --
-        if self.once:
-            self.state_var_names = list(vars.keys()) + list(weather.keys())
-            self.once = False
+        # if self.once:
+        #     self.state_var_names = list(vars.keys()) + list(weather.keys())
+        #     self.once = False
 
         # -- REPORTING --
         # self._report_time()  # time
@@ -264,8 +269,8 @@ class Agent:
         reward_components_per_zone_dict = {f'zn{zone_i}': None for zone_i in range(n_zones)}
 
         # -- GET DATA SINCE LAST INTERACTION --
-        interaction_frequency = min(self.interaction_frequency, self.current_step)
-        interaction_span = range(interaction_frequency)
+        # interaction_frequency = min(self.interaction_frequency, self.current_step)
+        interaction_span = range(self.interaction_frequency)
 
         # COMFORT
         temp_schedule = self.sim.get_ems_data(['hvac_operation_sched'], interaction_span)
@@ -297,15 +302,19 @@ class Agent:
 
             too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
                                          zone_temps_since_last_interaction)
+            temp_bounds_cold = temp_bounds[too_cold_temps != 0]
             too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
+
 
             too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
                                          zone_temps_since_last_interaction)
+            temp_bounds_warm = temp_bounds[too_warm_temps != 0]
             too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
 
+
             # MSE penalty for temps above and below comfortable bounds
-            reward = - ((too_cold_temps - temp_bounds[:, 0]) ** 2).sum() \
-                     - ((too_warm_temps - temp_bounds[:, 1]) ** 2).sum()
+            reward = - ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() \
+                     - ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
 
             reward_per_component = np.append(reward_per_component, reward)
 
@@ -397,15 +406,17 @@ class Agent:
 
             too_cold_temps = np.multiply(zone_temps_since_last_interaction < temp_bounds[:, 0],
                                          zone_temps_since_last_interaction)
+            temp_bounds_cold = temp_bounds[too_cold_temps != 0]
             too_cold_temps = too_cold_temps[too_cold_temps != 0]  # only cold temps left
 
             too_warm_temps = np.multiply(zone_temps_since_last_interaction > temp_bounds[:, 1],
                                          zone_temps_since_last_interaction)
+            temp_bounds_warm = temp_bounds[too_warm_temps != 0]
             too_warm_temps = too_warm_temps[too_warm_temps != 0]  # only warm temps left
 
             # MSE penalty for temps above and below comfortable bounds
-            uncomfortable_metric += ((too_cold_temps - temp_bounds[:, 0]) ** 2).sum() + \
-                         ((too_warm_temps - temp_bounds[:, 1]) ** 2).sum()
+            uncomfortable_metric += ((too_cold_temps - temp_bounds_cold[:, 0]) ** 2).sum() + \
+                         ((too_warm_temps - temp_bounds_warm[:, 1]) ** 2).sum()
 
         return uncomfortable_metric
 
