@@ -15,7 +15,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 # E+ Download Path
 ep_path = 'A:/Programs/EnergyPlusV9-5-0/'
 # IDF File / Modification Paths
-idf_file_name = r'/IdfFiles/in.idf'
+idf_file_name = r'/IdfFiles/BEM_5z_V1.idf'
 idf_final_file = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM/BEM_5z_V1.idf'
 os_folder = r'A:/Files/PycharmProjects/RL-EmsPy/Current_Prototype/BEM'
 idf_file_base = os_folder + idf_file_name
