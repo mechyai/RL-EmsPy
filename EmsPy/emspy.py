@@ -540,13 +540,13 @@ class EmsPy:
                 pass  # catch first iter when no data available
 
             # -- STATE UPDATE & OBSERVATION --
-            if update_state:
+            if update_state and self.timestep_zone_num_current % update_state_freq == 0:
                 # update & append simulation data
                 self._update_time()  # note timing update is first
                 self._update_ems_and_weather_vals(self.ems_names_master_list)  # update sensor/actuator/weather/ vals
                 self.callback_calling_points.append(calling_point)
                 # run user-defined agent state update function
-                if observation_fxn is not None:
+                if observation_fxn is not None :
                     reward = observation_fxn()  # execute user's state/reward observation
                     if reward is not None:  # reward returned
                         if not self.rewards_created:
