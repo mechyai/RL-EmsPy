@@ -1,6 +1,0 @@
-!- from https://www.timeanddate.com/time/change/usa/texas?year=2019
-!- For Texas CST: Should be Forward 2nd Sunday in March, Backward in 1st Sunday in November
-
-RunPeriodControl:DaylightSavingTime,
-    2nd Sunday in March,  !- should be March 10 for 2019
-    1st Sunday in November;  !- Should be Nov 3 for 2019
