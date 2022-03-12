@@ -835,10 +835,3 @@ class EmsPy:
                 self._create_default_dataframes()
                 print('* * * Default DF Creation Done * * *')
             self._create_custom_dataframes()
-
-
-class DataDashboard:
-    # TODO
-    def __init__(self):
-        pass
-

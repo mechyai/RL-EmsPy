@@ -2,3 +2,7 @@
 /Current_Prototype
 
 /emspy/Testscripts
+
+/.idea
+
+*.pyc
