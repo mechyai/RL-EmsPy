@@ -188,9 +188,9 @@ class Agent:
         # print reporting
         if self.time.hour % self.print_every_x_hours == 0 and self.time.minute == 0:
             print(f'\n\nTime: {str(self.time)}')
-            print('\n* Observation Function:')
-            print(f'\tVars: {vars}\n\tMeters: {meters}\n\tWeather:{weather}')
-            print(f'\tZone0 Temp: {round(self.zn0_temp,2)} C')
+            print('\n\t* Observation Function:')
+            print(f'\t\tVars: {vars}\n\t\tMeters: {meters}\n\t\tWeather:{weather}')
+            print(f'\t\tZone0 Temp: {round(self.zn0_temp,2)} C')
 
     def actuation_function(self):
         work_hours_heating_setpoint = 18  # deg C
@@ -215,10 +215,10 @@ class Agent:
 
         # print reporting
         if self.time.hour % self.print_every_x_hours == 0 and self.time.minute == 0:
-            print(f'\n* Actuation Function:'
-                  f'\n\t*{thermostat_settings}*'
-                  f'\n\tHeating Setpoint: {heating_setpoint}'
-                  f'\n\tCooling Setpoint: {cooling_setpoint}\n'
+            print(f'\n\t* Actuation Function:'
+                  f'\n\t\t*{thermostat_settings}*'
+                  f'\n\t\tHeating Setpoint: {heating_setpoint}'
+                  f'\n\t\tCooling Setpoint: {cooling_setpoint}\n'
                   )
 
         # return actuation dictionary, referring to actuator EMS variables set
