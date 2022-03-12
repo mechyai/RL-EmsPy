@@ -1,50 +1,36 @@
 """
 This is a simple example to show how to set up and simulation and utilize some of emspy's features.
-This implements simple rule-based thermostat control on a single zone of a 5-zone office building. Other data is
-tracked and reported just for example.
+This implements simple rule-based thermostat control based on the time of day, for a single zone of a 5-zone office
+building. Other data is tracked and reported just for example.
 
 The same functionality implemented in this script could be done much more simply, but I wanted to provide some exposure
 to the more complex features that are really useful when working with more complicated RL control tasks; Such as the use
 of the MdpManager to handle all of the simulation data and EMS variables.
 """
-
+import datetime
 import os
 
-from emspy import EmsPy, BcaEnv, MdpManager, idf_editor
+import matplotlib.pyplot as plt
 
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+from emspy import EmsPy, BcaEnv, MdpManager
+
+
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # a workaround to an error I encountered when running sim
 # OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
+
 
 # -- FILE PATHS --
 # * E+ Download Path *
 ep_path = 'A:/Programs/EnergyPlusV9-5-0/'  # path to E+ on system
 
 # IDF File / Modification Paths
-idf_file_name = r'/BEM_5z_V1.idf'  # building model IDF file
+idf_file_name = r'BEM_simple/simple_office_5zone_April.idf'  # building energy model (BEM) IDF file
 
 # Weather Path
-ep_weather_path = r'/DallasTexas_2019CST.epw'  # EPW weather file
+ep_weather_path = r'BEM_simple/5B_USA_CO_BOULDER_TMY2.epw'  # EPW weather file
 
 # Output .csv Path (optional)
 cvs_output_path = r'dataframes_output_test.csv'
-
-
-# --- create EMS Table of Contents (TC) for sensors/actuators ---
-# int_vars_tc = {"attr_handle_name": [("variable_type", "variable_key")],...}
-# vars_tc = {"attr_handle_name": [("variable_type", "variable_key")],...}
-# meters_tc = {"attr_handle_name": [("meter_name")],...}
-# actuators_tc = {"attr_handle_name": [("component_type", "control_type", "actuator_key")],...}
-# weather_tc = {"attr_name": [("weather_metric"),...}
-
-# STATE SPACE (& Auxiliary Simulation Data)
-zn0 = 'Core_ZN ZN'
-
-"""
-See mdpmanager.MdpManager.generate_mdp_from_tc() to understand this structure for initializing and managing variables, 
-and creating optional encoding functions/args for automatic encoding/normalization on variables values.
-
-Note, however, MdpManager is not required. You can choose to manage variables on your own.
-"""
 
 
 def temp_c_to_f(temp_c: float, arbitrary_arg=None):
@@ -54,37 +40,66 @@ def temp_c_to_f(temp_c: float, arbitrary_arg=None):
     return 1.8 * temp_c + 32
 
 
+# STATE SPACE (& Auxiliary Simulation Data)
+"""
+See mdpmanager.MdpManager.generate_mdp_from_tc() to understand this structure for initializing and managing variables, 
+and creating optional encoding functions/args for automatic encoding/normalization on variables values.
+
+Note, however, MdpManager is not required. You can choose to manage variables on your own.
+"""
+
+# --- create EMS Table of Contents (TC) for sensors/actuators ---
+# int_vars_tc = {"attr_handle_name": [("variable_type", "variable_key")],...}
+# vars_tc = {"attr_handle_name": [("variable_type", "variable_key")],...}
+# meters_tc = {"attr_handle_name": [("meter_name")],...}
+# actuators_tc = {"attr_handle_name": [("component_type", "control_type", "actuator_key")],...}
+# weather_tc = {"attr_name": [("weather_metric"),...}
+
+zn0 = 'Core_ZN ZN'
+
 tc_intvars = {}
 
 tc_vars = {
     # Building
     'hvac_operation_sched': [('Schedule Value', 'OfficeSmall HVACOperationSchd')],  # is building 'open'/'close'?
+    # 'people_occupant_count': [('People Occupant Count', zn0)],  # number of people per Zn0
     # -- Zone 0 (Core_Zn) --
     'zn0_temp': [('Zone Air Temperature', zn0), temp_c_to_f, 2],  # deg C
     'zn0_RH': [('Zone Air Relative Humidity', zn0)],  # %RH
 }
 
+"""
+NOTE: meters currently do not accumulate their values within there sampling interval during runtime, this happens at the
+end of the simulation as a post-processing step. These will behave a lot like just a collection of EMS variables. See
+UnmetHours for more info.
+"""
 tc_meters = {
     # Building-wide
     'electricity_facility': ['Electricity:Facility'],  # J
-    'electricity_HVAC': ['Electricity:HVAC'],  # J
-    'electricity_heating': ['Heating:Electricity'],  # J
-    'electricity_cooling': ['Cooling:Electricity'],  # J
-    'gas_heating': ['NaturalGas:HVAC']  # J
+    'electricity_HVAC': [('Electricity:HVAC')],  # J
+    'electricity_heating': [('Heating:Electricity')],  # J
+    'electricity_cooling': [('Cooling:Electricity')],  # J
+    'gas_heating': [('NaturalGas:HVAC')]  # J
 }
 
 tc_weather = {
-    'oa_rh': ['outdoor_relative_humidity'],  # %RH
-    'oa_db': ['outdoor_dry_bulb', temp_c_to_f],  # deg C
-    'oa_pa': ['outdoor_barometric_pressure'],  # Pa
-    'sun_up': ['sun_is_up'],  # T/F
-    'rain': ['is_raining'],  # T/F
-    'snow': ['is_snowing'],  # T/F
-    'wind_dir': ['wind_direction'],  # deg
-    'wind_speed': ['wind_speed']  # m/s
+    'oa_rh': [('outdoor_relative_humidity')],  # %RH
+    'oa_db': [('outdoor_dry_bulb'), temp_c_to_f],  # deg C
+    'oa_pa': [('outdoor_barometric_pressure')],  # Pa
+    'sun_up': [('sun_is_up')],  # T/F
+    'rain': [('is_raining')],  # T/F
+    'snow': [('is_snowing')],  # T/F
+    'wind_dir': [('wind_direction')],  # deg
+    'wind_speed': [('wind_speed')]  # m/s
 }
 
 # ACTION SPACE
+"""
+NOTE: only zn0 (CoreZn) has been setup in the model to allow 24/7 HVAC setpoint control. Other zones have default
+HVAC operational schedules and night cycle managers that prevent EMS Actuator control 24/7. Essentially, at times the 
+HVAV is "off" and can't be operated. If all zones are to be controlled 24/7, they must be implemented as CoreZn.
+See the "HVAC Systems" tab in OpenStudio to zone configurations.
+"""
 tc_actuators = {
     # HVAC Control Setpoints
     'zn0_cooling_sp': [('Zone Temperature Control', 'Cooling Setpoint', zn0)],  # deg C
@@ -106,7 +121,7 @@ sim = BcaEnv(
     timesteps=sim_timesteps,
     tc_vars=my_mdp.tc_var,
     tc_intvars=my_mdp.tc_intvar,
-    tc_meters = my_mdp.tc_meter,
+    tc_meters=my_mdp.tc_meter,
     tc_actuator=my_mdp.tc_actuator,
     tc_weather=my_mdp.tc_weather
 )
@@ -135,10 +150,10 @@ class Agent:
         self.mdp = mdp
 
         # simplify naming of all MDP elements/types
-        self.vars = mdp.tc_var
-        self.meters = mdp.tc_meter
-        self.weather = mdp.tc_weather
-        self.actuators = mdp.tc_actuator
+        self.vars = mdp.ems_type_dict['var']  # all MdpElements of EMS type var
+        self.meters = mdp.ems_type_dict['meter']  # all MdpElements of EMS type meter
+        self.weather = mdp.ems_type_dict['weather']  # all MdpElements of EMS type weather
+        self.actuators = mdp.ems_type_dict['actuator']  # all MdpElements of EMS type actuator
 
         # get just the names of EMS variables to use with other functions
         self.var_names = mdp.get_ems_names(self.vars)
@@ -149,6 +164,9 @@ class Agent:
         # simulation data state
         self.zn0_temp = None  # deg C
         self.time = None
+
+        # print reporting
+        self.print_every_x_hours = 2
 
     def observation_function(self):
         # -- FETCH/UPDATE SIMULATION DATA --
@@ -164,11 +182,15 @@ class Agent:
         meters = self.mdp.update_ems_value(self.meters, meter_data)
         weather = self.mdp.update_ems_value(self.weather, weather_data)
 
-        print(f'\n\n{str(self.time)}')
-        print(f'Vars: {vars}\nMeters: {meters}, Weather:{weather}')
-
         # get specific values from MdpManager based on name
         self.zn0_temp = self.mdp.get_mdp_element_from_name('zn0_temp').value
+
+        # print reporting
+        if self.time.hour % self.print_every_x_hours == 0 and self.time.minute == 0:
+            print(f'\n\nTime: {str(self.time)}')
+            print('\n* Observation Function:')
+            print(f'\tVars: {vars}\n\tMeters: {meters}\n\tWeather:{weather}')
+            print(f'\tZone0 Temp: {round(self.zn0_temp,2)} C')
 
     def actuation_function(self):
         work_hours_heating_setpoint = 18  # deg C
@@ -177,30 +199,39 @@ class Agent:
         off_hours_heating_setpoint = 15  # deg C
         off_hours_cooilng_setpoint = 30  # deg C
 
+        work_day_start = datetime.time(6, 0)  # day starts 6 am
+        work_day_end = datetime.time(20, 0)  # day ends at 8 pm
 
-        if work_day_start < current_time < workd_day_end:
+        if work_day_start < self.time.time() < work_day_end:  #
             # during workday
             heating_setpoint = work_hours_heating_setpoint
             cooling_setpoint = work_hours_cooling_setpoint
+            thermostat_settings = 'Work-Hours Thermostat'
         else:
             # off work
             heating_setpoint = off_hours_heating_setpoint
             cooling_setpoint = off_hours_cooilng_setpoint
+            thermostat_settings = 'Off-Hours Thermostat'
 
-        print(f'Action:\n\tHeating Setpoint: {heating_setpoint}\n\tCooling Setpoint: {cooling_setpoint}')
+        # print reporting
+        if self.time.hour % self.print_every_x_hours == 0 and self.time.minute == 0:
+            print(f'\n* Actuation Function:'
+                  f'\n\t*{thermostat_settings}*'
+                  f'\n\tHeating Setpoint: {heating_setpoint}'
+                  f'\n\tCooling Setpoint: {cooling_setpoint}\n'
+                  )
 
-        # return actuation dictionary, refering to actuator EMS variables set
+        # return actuation dictionary, referring to actuator EMS variables set
         return {
             'zn0_heating_sp': heating_setpoint,
             'zn0_cooling_sp': cooling_setpoint
         }
 
 
-# create agent instance
+# Create agent instance
 my_agent = Agent(sim, my_mdp)
 
-
-# set your callback function (observation and/or actuation) function for a given calling point
+# Set your callback function (observation and/or actuation) function for a given calling point
 sim.set_calling_point_and_callback_function(
     calling_point=calling_point_for_callback_fxns,
     observation_fxn=my_agent.observation_function,  # optional
@@ -212,8 +243,19 @@ sim.set_calling_point_and_callback_function(
 
 # -- RUN BUILDING SIMULATION --
 sim.run_env(ep_weather_path)
-# reset when done
-sim.reset_state()
+sim.reset_state()  # reset when done
+
+# -- Sample Output Data
+output_dfs = sim.get_df()  # LOOK at all the data collected in here, custom DFs can be made too
+
+# -- Plot Results --
+fig, ax = plt.subplots()
+output_dfs['var'].plot(y='zn0_temp', use_index=True, ax=ax)
+output_dfs['weather'].plot(y='oa_db', use_index=True, ax=ax)
+output_dfs['meter'].plot(y='electricity_HVAC', use_index=True, ax=ax, secondary_y=True)
+output_dfs['actuator'].plot(y='zn0_heating_sp', use_index=True, ax=ax)
+output_dfs['actuator'].plot(y='zn0_cooling_sp', use_index=True, ax=ax)
+plt.title('Zn0 Temps and Thermostat Setpoint for Year')
 
 # Analyze results in "out" folder, DView, or directly from your Python variables and Pandas Dataframes
 
