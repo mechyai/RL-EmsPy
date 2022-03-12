@@ -7,15 +7,22 @@ class BcaEnv(EmsPy):
     """
     Building Control Agent & ENVironemnt (BcaEnv)
 
-    This class represents the interace to the Building Control Agent (bca) and Environment for RL. It exposes a higher
+    This class represents the interface to the Building Control Agent (bca) and Environment for RL. It exposes a higher
     level of abstraction to its parent class, emspy, encapsulating more complex features.
     Users should be able to perform all necessary interactions for control algorithm experimentation mostly or
     completely through this class.
     """
 
     # Building Control Agent (bca) & Environment
-    def __init__(self, ep_path: str, ep_idf_to_run: str, timesteps: int,
-                 tc_vars: dict, tc_intvars: dict, tc_meters: dict, tc_actuator: dict, tc_weather: dict):
+    def __init__(self, ep_path: str,
+                 ep_idf_to_run: str,
+                 timesteps: int,
+                 tc_vars: dict,
+                 tc_intvars: dict,
+                 tc_meters: dict,
+                 tc_actuator: dict,
+                 tc_weather: dict):
+
         """See emspy.__init__() documentation."""
 
         # follow same init procedure as parent class emspy
@@ -26,8 +33,8 @@ class BcaEnv(EmsPy):
                                                 observation_fxn,
                                                 actuation_fxn,
                                                 update_state: bool,
-                                                update_state_freq: int = 1,
-                                                update_act_freq: int = 1):
+                                                update_observation_frequency: int = 1,
+                                                update_actuation_frequency: int = 1):
         """
         Sets connection for runtime calling points and custom callback function specification with defined arguments.
 
@@ -42,18 +49,19 @@ class BcaEnv(EmsPy):
         :param actuation_fxn: the user defined actuation function to be called at runtime calling point and desired
         timestep frequency, function must return dict of actuator names (key) and associated setpoint (value)
         :param update_state: whether EMS and time/timestep should be updated.
-        :param update_state_freq: the number of zone timesteps per updating the simulation state
-        :param update_act_freq: the number of zone timesteps per updating the actuators from the actuation function
+        :param update_observation_frequency: the number of zone timesteps per running the observation function
+        :param update_actuation_frequency: the number of zone timesteps per updating the actuators from the actuation
+        function
         """
 
-        if update_act_freq > update_state_freq:
+        if update_actuation_frequency > update_observation_frequency:
             print(f'\n*WARNING: It is unusual to have your action update more frequent than your state update\n')
         if calling_point in self.calling_point_callback_dict:  # overwrite error
             raise Exception(
                 f'ERROR: You have overwritten the calling point \'{calling_point}\'. Keep calling points unique.')
         else:
             self.calling_point_callback_dict[calling_point] = [observation_fxn, actuation_fxn, update_state,
-                                                               update_state_freq, update_act_freq]
+                                                               update_observation_frequency, update_actuation_frequency]
 
     def _check_ems_metric_input(self, ems_metric):
         """Verifies user-input of EMS metric/type list is valid."""
