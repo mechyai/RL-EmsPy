@@ -248,20 +248,20 @@ class BcaEnv(EmsPy):
 
         for df_name in df_default_names:  # iterate thru available EMS types
             if df_name in df_names or not df_names:  # specific or ALL dfs
-                df = (getattr(self, 'df_' + df_name))
+                df = (getattr(self, 'df_' + df_name))  # create df for EMS type
                 return_df[df_name] = df
 
                 # create complete DF of all default vars with only 1 set of time/index columns
-                if len(self.rewards) == self.t_datetimes:
-                    # include reward to ALL Df if only its the same size
-                    if all_df.empty:
-                        all_df = df.copy(deep=True)
+                if all_df.empty:
+                    all_df = df.copy(deep=True)
+                else:
+                    if df_name == 'reward' and len(self.rewards) != self.t_datetimes:
+                        # include reward to ALL DFs only if its the same size
+                        print('*NOTE: Rewards DF will not be included on ALL DF as it is not the same size.')
                     else:
-                        # TODO causes issue
                         all_df = pd.merge(all_df, df, on=['Datetime', 'Timestep', 'Calling Point'])
-                elif df_name == 'reward':
-                    print('*NOTE: Rewards DF will not be included on ALL DF as it is not the same size.')
 
+                # remove from list since accounted for
                 if df_name in df_names:
                     df_names.remove(df_name)
 
