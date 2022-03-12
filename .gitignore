@@ -4,5 +4,6 @@
 /emspy/Testscripts
 
 /.idea
+/__pycache__
 
 *.pyc
