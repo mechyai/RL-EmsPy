@@ -66,7 +66,7 @@ class BcaEnv(EmsPy):
     def _check_ems_metric_input(self, ems_metric):
         """Verifies user-input of EMS metric/type list is valid."""
 
-        # catch EMS type names (var, intvar, actuator, etc.)
+        # catch EMS type names (var, intvar, meter, actuator, etc.)
         if ems_metric in self.ems_num_dict:
             raise Exception(f'ERROR: EMS categories can only be called by themselves, please only call one at a '
                             f'time.')
@@ -76,26 +76,27 @@ class BcaEnv(EmsPy):
                             f' or emspy.ems_master_list & emspy.times_master_list for available EMS & '
                             f'timing metrics')
 
-    def get_ems_data(self, ems_metric_list: list, time_rev_index=0) -> list:
+    def get_ems_data(self, ems_metric_list: list, time_reverse_index=0) -> list:
         """
         This takes desired EMS metric(s) (or type) & returns the entire current data set(s) OR at specific time indices.
 
         This function should be used to collect user-defined state space OR time information at each timestep. 1 to all
-        EMS metrics and timing can be called, or just EMS category (var, intvar, meter, actuator, weather), and 1 data
-        point to the entire current data set can be returned.
-        It is likely that the user will want the most recent data point only.
+        EMS metrics and timing can be called, or just a single EMS Category (either 'var', 'intvar', 'meter', 'actuator'
+        or, 'weather'), and 1 data point to the entire current data set can be returned.
 
-        If calling any default timing data, see emspy.times_master_list for available timing data metrics.
+        It is likely that the user will want the most recent data point only, this is a default argument.
+
+        If calling any default timing data, see emspy.available_timing_metrics for available timing data.
 
         :param ems_metric_list: list of strings (or single element) of any available EMS/timing metric(s) to be called,
         or ONLY ONE entire EMS category ('var', 'intvar', 'meter', 'actuator', 'weather', 'time')
-        :param time_rev_index: list (or single value) of timestep indexes, applied to all EMS/timing metrics starting
-        from index 0 as most recent available data point. An empty list [] will return the entire current data list for
-        each metric.
+        :param time_reverse_index: list (or single value) of timestep indexes, applied to all EMS/timing metrics starting
+        from index 0 as most recent available data point. Passing an empty list [] will return the entire current data
+        list for each specified EMS metric.
         :return return_data_list: nested list of data for each EMS metric at each time index specified, or entire list
         """
 
-        # handle single val inputs -> convert to list for rest of function
+        # Handle single val inputs -> convert to list for rest of function
         single_val = False
         single_metric = False
         # metrics
@@ -104,35 +105,43 @@ class BcaEnv(EmsPy):
         if len(ems_metric_list) == 1:
             single_metric = True
         # time indexes
-        if type(time_rev_index) is not list and type(time_rev_index) is not range:  # assuming single time
-            time_rev_index = [time_rev_index]
-        if len(time_rev_index) == 1:
+        if type(time_reverse_index) is not list and type(time_reverse_index) is not range:  # assuming single time
+            time_reverse_index = [time_reverse_index]  # make single time iterable
+        if len(time_reverse_index) == 1:
             single_val = True
 
         return_data_list = []
 
-        # check if only EMS category called
+        # check if only an EMS category called
         ems_type = ems_metric_list[0]
-        if ems_type in self.ems_num_dict and single_metric:
-            # reassign entire EMS type list
-            if ems_type == 'time':
-                ems_metric_list = self.available_timing_metrics
+        if ems_type in self.ems_num_dict:
+            if single_metric:
+                # reassign entire metrics list to a single EMS type
+                if ems_type == 'time':
+                    ems_metric_list = self.available_timing_metrics
+                else:
+                    ems_metric_list = list(getattr(self, 'tc_' + ems_type).keys())  # get all EMS metrics of that type
+                if len(ems_metric_list) > 1:
+                    single_metric = False
             else:
-                ems_metric_list = list(getattr(self, 'tc_' + ems_metric_list[0]).keys())
-            if len(ems_metric_list) > 1:
-                single_metric = False
+                raise ValueError(f'If returning data for an entire EMS Category, you can only do one at a time from the'
+                                 f'list "var", "intvar", "meter", "weather", or "actuator. Your input was '
+                                 f'{ems_metric_list}')
 
         for ems_metric in ems_metric_list:
-            # verify valid input #TODO do once
+            # verify valid input
+
+            # TODO do once, again at each timestep is redundant?
             self._check_ems_metric_input(ems_metric)
             ems_type = self._get_ems_type(ems_metric)  # for attribute variable name
-            # no time index specified, return ALL current data
-            if not time_rev_index:
+
+            if not time_reverse_index:
+                # no time index specified, return ALL current data available
                 return_data_list.append(getattr(self, 'data_' + ems_type + '_' + ems_metric))
             else:
                 return_data_indexed = []
                 # iterate through previous time indexes
-                for time in time_rev_index:
+                for time in time_reverse_index:
                     if ems_type != 'time':
                         ems_name = 'data_' + ems_type + '_' + ems_metric
                     else:
@@ -151,6 +160,7 @@ class BcaEnv(EmsPy):
                     return return_data_indexed
                 else:
                     return_data_list.append(return_data_indexed)
+
         return return_data_list
 
     def get_weather_forecast(self, weather_metrics: list, when: str, hour: int, zone_ts: int):
@@ -167,12 +177,14 @@ class BcaEnv(EmsPy):
 
     def update_ems_data(self, ems_metric_list: list, return_data: bool):
         """
-        This takes desired EMS metric(s) (or type) to update from the sim (and opt return val) at calliing point.
+        This takes desired EMS metric(s) (or type) to update from the sim (and opt return val) at calling point.
 
         This OPTIONAL function can be used to update/collect specific EMS at each timestep for a given calling point.
         One to all EMS metrics can be called, or just EMS category (var, intvar, meter, actuator, weather) and have the
-        data point updated & returned. This is ONLY NEEDED if the user wants to update specific EMS metrics at a unique
-        calling point separate from ALL EMS metrics if using default state update.
+        data point updated & returned.
+
+        *This is ONLY NEEDED if the user wants to update specific EMS metrics at a unique calling point, separate from
+        ALL EMS metrics if using default state update.
 
         This also works for default timing data.  # TODO does not work currently with _update_ems_and_weather_val
 
@@ -182,10 +194,11 @@ class BcaEnv(EmsPy):
         :return return_data_list: list of fetched data for each EMS metric at each time index specified or None
         """
 
-        # if only EMS category called
         if ems_metric_list[0] in self.ems_num_dict and len(ems_metric_list) == 1:
+            # if only single EMS category called
             ems_metric_list = list(getattr(self, 'tc_' + ems_metric_list[0]).keys())
-        else:  # TODO get rid off, doesnt work with multiple method instances
+        else:
+            # TODO get rid of, doesnt work with multiple method instances
             for ems_metric in ems_metric_list:
                 if not self.ems_list_update_checked:
                     self._check_ems_metric_input(ems_metric)
@@ -193,7 +206,7 @@ class BcaEnv(EmsPy):
 
         self._update_ems_and_weather_vals(ems_metric_list)
         if return_data:
-            return self.get_ems_data(ems_metric_list)
+            return self.get_ems_data(ems_metric_list)  # return most recent update
         else:
             return None
 
@@ -213,9 +226,12 @@ class BcaEnv(EmsPy):
         self.df_count += 1
         self.df_custom_dict[df_name] = [ems_metrics, calling_point, update_freq]
 
-    def track_standard_dfs(self, track: bool = False):
-        """Only necessary if you don't want to track standard DFs, otherwise they will be tracked automatically."""
-        if not track:
+    def dont_track_standard_dfs(self, dont_track: bool = True):
+        """
+        Only necessary if you don't want to track standard DFs, otherwise they will be tracked automatically.
+        """
+
+        if dont_track:
             self.default_dfs_tracked = False
 
     def get_df(self, df_names: list = None, to_csv_file: str = None):
@@ -291,6 +307,8 @@ class BcaEnv(EmsPy):
             return return_df
 
     def run_env(self, weather_file_path: str):
-        """Runs E+ simulation for given .IDF building model and EPW Weather File"""
+        """
+        Runs E+ simulation for given .IDF building model and EPW Weather File
+        """
 
         self.run_simulation(weather_file_path)
