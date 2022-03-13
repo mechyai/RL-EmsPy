@@ -117,7 +117,6 @@ The diagram above represents the simulation flow and RL integration with calling
  
  The Calling Point & Actuation Function dictionary should be built one key-value at a time using the method for each desired calling point callback:
 
-# TODO update new method arguments
  ```python
  BcaEnv.set_calling_point_and_callback_function(
     calling_point: str, observation_function, actuation_function, update_state: bool, update_observation_frequency: int = 1, update_actuation_frequency: int = 1)
@@ -137,10 +136,9 @@ The diagram above represents the simulation flow and RL integration with calling
 The user-defined `actuation_function` should encapsulate any sort of control algorithm (more than one can be created and linked to unique calling points, but it's likely that only 1 will be used as the entire RL algorithm). Using the methods `BcaEnv.get_ems_data` and `BcaEnv.get_weather_forecast`, to collect state information, a control algorithm/function can be created and its actions returned. In `emspy` using a decorator function, this **Actuation** function will automatically be attached to the standard callback function and linked to the defined calling point. At that calling point during runtime, the actuation function will be ran and the returned actuator dict will be passed to the simulation to update actuator setpoint values. 
 The rest of the arguments are also automatically passed to the base-callback function to dictate the update frequency of observation and actuation. This means that data collection or actuation updates do not need to happen every timestep or in tandem with each other. 
 
-### Please refer to the Wiki or `EmsPy` and `BcaEnv` documentation on how to utilize this API.
+### Please refer to the Wiki or `EmsPy` and `BcaEnv` code documentation on how to utilize this API.
 
 Below, is a sample sub-script of EmsPy usage: controlling the thermostat setpoints of a single zone of a 5-Zone Office Building. 
-
 
 
 ### References:
