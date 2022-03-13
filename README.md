@@ -96,11 +96,11 @@ sim_environment = BcaEnv(ep_path: str, ep_idf_to_run: str, timesteps: int, tc_va
   - ***Note:*** *this requires an understanding of EnergyPlus model input and output files, especially for actuators*
   - Each EMS category's ToC should be a dictionary with each EMS metric's user-defined name (key) and its required arguments (value) for
     fetching the 'handle' or data from the model. See [Data Transfer API documentation](https://energyplus.readthedocs.io/en/stable/datatransfer.html) for more info on this process.     
-    - Variables: `'user_var_name': ['variable_name', 'variable_key']` elements of `tc_vars` dict
-    - Internal Variables: `'user_intvar_name': ['variable_type', 'variable_key']` elements of `tc_intvars` dict 
-    - Meters: `'user_meter_name': 'meter_name'` element of `tc_meter` dict
-    - Actuators: `'user_actuator_name': ['component_type', 'control_type', 'actuator_key']` elements of `tc_actuator` dict
-    - Weathers: `'user_weather_name': 'weather_name'` elements of `tc_weather` dict
+    - **Variables**: `'user_var_name': ['variable_name', 'variable_key']` elements of `tc_vars` dict
+    - **Internal Variables**: `'user_intvar_name': ['variable_type', 'variable_key']` elements of `tc_intvars` dict 
+    - **Meters**: `'user_meter_name': ['meter_name']` element of `tc_meter` dict
+    - **Weather**: `'user_weather_name': ['weather_name']` elements of `tc_weather` dict
+    - **Actuators**: `'user_actuator_name': ['component_type', 'control_type', 'actuator_key']` elements of `tc_actuator` dict
  
 Once this has been completed, your ***BcaEnv*** object has all it needs to manage your runtime EMS needs - implementing 
 various data collection/organization and dataframes attributes, as well as finding the EMS handles from the ToCs, etc. 
