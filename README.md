@@ -138,7 +138,7 @@ The rest of the arguments are also automatically passed to the base-callback fun
 
 ### Please refer to the Wiki or `EmsPy` and `BcaEnv` code documentation on how to utilize this API.
 
-Below, is a sample sub-script of EmsPy usage: controlling the thermostat setpoints of a single zone of a 5-Zone Office Building. 
+Below, is a sample sub-script of EmsPy usage: controlling the thermostat setpoints of a single zone of a 5-Zone Office Building based on the time of day. 
 ```
 """
 This is a simple example to show how to set up and simulation and utilize some of emspy's features.
@@ -149,10 +149,9 @@ This is a simplified/cleaned version (no MdpManager, less comments, etc.) of the
 meant for the README.md.
 """
 import datetime
-
 import matplotlib.pyplot as plt
 
-from emspy import EmsPy, BcaEnv, MdpManager
+from emspy import EmsPy, BcaEnv
 
 
 # -- FILE PATHS --
@@ -166,16 +165,9 @@ ep_weather_path = r'BEM_simple/5B_USA_CO_BOULDER_TMY2.epw'  # EPW weather file
 
 # STATE SPACE (& Auxiliary Simulation Data)
 
-# --- create EMS Table of Contents (TC) for sensors/actuators ---
-# int_vars_tc = {"attr_handle_name": [("variable_type", "variable_key")],...}
-# vars_tc = {"attr_handle_name": [("variable_type", "variable_key")],...}
-# meters_tc = {"attr_handle_name": [("meter_name")],...}
-# actuators_tc = {"attr_handle_name": [("component_type", "control_type", "actuator_key")],...}
-# weather_tc = {"attr_name": [("weather_metric"),...}
-
 zn0 = 'Core_ZN ZN'
 
-tc_intvars = {}
+tc_intvars = {}  # empty, don't need any
 
 tc_vars = {
     # Building
@@ -225,7 +217,7 @@ sim = BcaEnv(
     tc_intvars=tc_intvars,
     tc_meters=tc_meters,
     tc_actuator=tc_actuators,
-    tc_weather=tc_weathers
+    tc_weather=tc_weather
 )
 
 class Agent:
@@ -239,47 +231,29 @@ class Agent:
     def __init__(self, bca: BcaEnv):
         self.bca = bca
 
-        # simplify naming of all MDP elements/types
-        self.vars = mdp.ems_type_dict['var']  # all MdpElements of EMS type var
-        self.meters = mdp.ems_type_dict['meter']  # all MdpElements of EMS type meter
-        self.weather = mdp.ems_type_dict['weather']  # all MdpElements of EMS type weather
-        self.actuators = mdp.ems_type_dict['actuator']  # all MdpElements of EMS type actuator
-
-        # get just the names of EMS variables to use with other functions
-        self.var_names = mdp.get_ems_names(self.vars)
-        self.meter_names = mdp.get_ems_names(self.meters)
-        self.weather_names = mdp.get_ems_names(self.weather)
-        self.actuator_names = mdp.get_ems_names(self.actuators)
-
         # simulation data state
         self.zn0_temp = None  # deg C
         self.time = None
-
-        # print reporting
-        self.print_every_x_hours = 2
 
     def observation_function(self):
         # -- FETCH/UPDATE SIMULATION DATA --
         self.time = self.bca.get_ems_data(['t_datetimes'])
 
-        # Get data from simulation at current timestep (and calling point)
-        var_data = self.bca.get_ems_data(self.var_names)
-        meter_data = self.bca.get_ems_data(self.meter_names)
-        weather_data = self.bca.get_ems_data(self.weather_names)
-
-        # update our MdpManager and all MdpElements, automatically calling any encoding/normalization functions
-        vars = self.mdp.update_ems_value(self.vars, var_data)
-        meters = self.mdp.update_ems_value(self.meters, meter_data)
-        weather = self.mdp.update_ems_value(self.weather, weather_data)
+        # Get data from simulation at current timestep (and calling point) using ToC names
+        var_data = self.bca.get_ems_data(list(self.bca.tc_var.keys()))
+        meter_data = self.bca.get_ems_data(list(self.bca.tc_meter.keys()))
+        weather_data = self.bca.get_ems_data(list(self.bca.tc_weather.keys()))
 
         # get specific values from MdpManager based on name
-        self.zn0_temp = self.mdp.get_mdp_element_from_name('zn0_temp').value
+        self.zn0_temp = var_data[1]  # index 1st element to get zone temps, based on EMS Variable ToC
+        # OR
+        self.zn0_temp = self.bca.get_ems_data(['zn0_temp'])
 
         # print reporting
-        if self.time.hour % self.print_every_x_hours == 0 and self.time.minute == 0:
+        if self.time.hour % 2 == 0 and self.time.minute == 0:  # report every 2 hours
             print(f'\n\nTime: {str(self.time)}')
             print('\n\t* Observation Function:')
-            print(f'\t\tVars: {vars}\n\t\tMeters: {meters}\n\t\tWeather:{weather}')
+            print(f'\t\tVars: {var_data}\n\t\tMeters: {meter_data}\n\t\tWeather:{weather_data}')
             print(f'\t\tZone0 Temp: {round(self.zn0_temp,2)} C')
 
     def actuation_function(self):
@@ -287,11 +261,12 @@ class Agent:
         work_hours_cooling_setpoint = 22  # deg C
 
         off_hours_heating_setpoint = 15  # deg C
-        off_hours_cooilng_setpoint = 30  # deg C
+        off_hours_coolng_setpoint = 30  # deg C
 
         work_day_start = datetime.time(6, 0)  # day starts 6 am
         work_day_end = datetime.time(20, 0)  # day ends at 8 pm
 
+        # Change thermostat setpoints based on time of day
         if work_day_start < self.time.time() < work_day_end:  #
             # during workday
             heating_setpoint = work_hours_heating_setpoint
@@ -300,11 +275,11 @@ class Agent:
         else:
             # off work
             heating_setpoint = off_hours_heating_setpoint
-            cooling_setpoint = off_hours_cooilng_setpoint
+            cooling_setpoint = off_hours_coolng_setpoint
             thermostat_settings = 'Off-Hours Thermostat'
 
         # print reporting
-        if self.time.hour % self.print_every_x_hours == 0 and self.time.minute == 0:
+        if self.time.hour % 2 == 0 and self.time.minute == 0:  # report every 2 hours
             print(f'\n\t* Actuation Function:'
                   f'\n\t\t*{thermostat_settings}*'
                   f'\n\t\tHeating Setpoint: {heating_setpoint}'
@@ -318,17 +293,17 @@ class Agent:
         }
 
 
-# Create agent instance
+#  --- Create agent instance ---
 my_agent = Agent(sim)
 
-# Set your callback function (observation and/or actuation) function for a given calling point
+# --- Set your callback function (observation and/or actuation) function for a given calling point ---
 sim.set_calling_point_and_callback_function(
     calling_point=calling_point_for_callback_fxn,
-    observation_function=my_agent.observation_function,  # optional
-    actuation_function=my_agent.actuation_function,  # optional
-    update_state=True,
-    update_observation_frequency=1,
-    update_actuation_frequency=1
+    observation_function=my_agent.observation_function,  # optional function
+    actuation_function=my_agent.actuation_function,  # optional function
+    update_state=True,  # use this callback to update the EMS state
+    update_observation_frequency=1,  # linked to observation update
+    update_actuation_frequency=1  # linked to actuation update
 )
 
 # -- RUN BUILDING SIMULATION --
@@ -348,7 +323,15 @@ output_dfs['actuator'].plot(y='zn0_cooling_sp', use_index=True, ax=ax)
 plt.title('Zn0 Temps and Thermostat Setpoint for Year')
 
 # Analyze results in "out" folder, DView, or directly from your Python variables and Pandas Dataframes
+
 ```
+<ins>5 Zone Office Building Model</ins>
+
+<img src="https://user-images.githubusercontent.com/65429130/158045813-914259d1-a0ba-45a5-b81d-35520e685b23.PNG" width = "750">
+
+<ins>Sample Results for the Month of April</ins>
+
+<img src="https://user-images.githubusercontent.com/65429130/158045876-da914d81-f705-43c6-9815-5c5c5cff9778.PNG" width = "750">
 
 
 ### References:
