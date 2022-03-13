@@ -76,7 +76,7 @@ class BcaEnv(EmsPy):
                             f' or emspy.ems_master_list & emspy.times_master_list for available EMS & '
                             f'timing metrics')
 
-    def get_ems_data(self, ems_metric_list: list, time_reverse_index=0) -> list:
+    def get_ems_data(self, ems_metric_list: list, time_reverse_index=0, return_dict: bool = False):
         """
         This takes desired EMS metric(s) (or type) & returns the entire current data set(s) OR at specific time indices.
 
@@ -93,6 +93,8 @@ class BcaEnv(EmsPy):
         :param time_reverse_index: list (or single value) of timestep indexes, applied to all EMS/timing metrics starting
         from index 0 as most recent available data point. Passing an empty list [] will return the entire current data
         list for each specified EMS metric.
+        :param return_dict: True if you want to return data in dictionary format, with EMS name as the key, otherwise
+        raw list will be returned in order of EMS items in the input list or EMS ToC
         :return return_data_list: nested list of data for each EMS metric at each time index specified, or entire list
         """
 
@@ -110,9 +112,7 @@ class BcaEnv(EmsPy):
         if len(time_reverse_index) == 1:
             single_val = True
 
-        return_data_list = []
-
-        # check if only an EMS category called
+        # Check if only an EMS category called
         ems_type = ems_metric_list[0]
         if ems_type in self.ems_num_dict:
             if single_metric:
@@ -128,40 +128,55 @@ class BcaEnv(EmsPy):
                                  f'list "var", "intvar", "meter", "weather", or "actuator. Your input was '
                                  f'{ems_metric_list}')
 
+        if return_dict:
+            return_data = {}  # organized by key EMS name
+        else:
+            return_data = []  # organized by order, only raw values
+
         for ems_metric in ems_metric_list:
-            # verify valid input
 
             # TODO do once, again at each timestep is redundant?
-            self._check_ems_metric_input(ems_metric)
+            self._check_ems_metric_input(ems_metric)  # verify valid input
             ems_type = self._get_ems_type(ems_metric)  # for attribute variable name
 
             if not time_reverse_index:
-                # no time index specified, return ALL current data available
-                return_data_list.append(getattr(self, 'data_' + ems_type + '_' + ems_metric))
+                # no time index specified, return ALL current data available,  #TODO this doens't compensate for time data
+                if return_dict:
+                    return_data[ems_metric] = getattr(self, 'data_' + ems_type + '_' + ems_metric)
+                else:
+                    return_data.append(getattr(self, 'data_' + ems_type + '_' + ems_metric))
             else:
-                return_data_indexed = []
                 # iterate through previous time indexes
+                return_data_indexed = []
                 for time in time_reverse_index:
                     if ems_type != 'time':
                         ems_name = 'data_' + ems_type + '_' + ems_metric
                     else:
-                        ems_name = ems_metric
+                        ems_name = ems_metric  # TODO update timing metrics
                     try:
                         data_indexed = getattr(self, ems_name)[-1 - time]
-                        # so that a single-element nested list is not returned
                         if single_val:
-                            return_data_indexed = data_indexed
+                            return_data_indexed = data_indexed  # so that nested list of single-element is Not returned
                         else:
                             return_data_indexed.append(data_indexed)
                     except IndexError:
                         print('\n*NOTE: Not enough simulation time elapsed to collect data at specified index.\n')
-                # no unnecessarily nested lists
-                if single_metric:
-                    return return_data_indexed
-                else:
-                    return_data_list.append(return_data_indexed)
+                        # TODO add feature that will add what data is available, IFF helpful
 
-        return return_data_list
+                # No unnecessarily nested lists
+                if single_metric:
+                    # handle dictionary form factor if needed
+                    if return_dict:
+                        return {ems_metric: return_data_indexed}
+                    else:
+                        return return_data_indexed
+                else:
+                    if return_dict:
+                        return_data[ems_metric] = return_data_indexed
+                    else:
+                        return_data.append(return_data_indexed)
+
+        return return_data
 
     def get_weather_forecast(self, weather_metrics: list, when: str, hour: int, zone_ts: int):
         """
