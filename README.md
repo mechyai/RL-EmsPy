@@ -42,16 +42,17 @@ to resemble OpenAI's Gym Environment API. This standardization building models a
 - pyenergyplus Python package (included in E+ download)
 - [openstudio Python package](https://pypi.org/project/openstudio/) (not currently used, but plan to add functionality)
 
-### Usage Explanation:
+### Overview
 
 The diagram below depicts the RL-interaction-loop within a timestep at simulation runtime. Because of the unchangeable technicalities of the 
 interaction between EMS and the E+ simulator - through the use of callback function(s) and the many calling points available
- per timestep - the underlying RL interface and algorithm must be implemented in a very specific manner, which will be explained in 
-detail below. 
+ per timestep - the underlying RL interface and algorithm must be implemented in a very specific manner. This was done in a way as to provide maximal flexibility and not constrain usage, but at the inherent cost of some extra complexity and greater learning curve. However, once understood, it is simple to use and fit to your custom needs. This be explained in detail below and in the Wiki pages. 
 
-<img src="https://user-images.githubusercontent.com/65429130/119517258-764bbc00-bd45-11eb-97bf-1af9ab0444cb.png" width = "750"> 
+<img src="https://user-images.githubusercontent.com/65429130/158069215-6a4c654d-5658-4765-8828-0728fcc34c88.PNG" width = "750"> 
 
-<br/>There are likely 4 main use-cases for this repo, if you are hoping to implement RL algorithms at runtime. <ins>In order of increasing complexity</ins>:
+<br/>There are likely 4 main use-cases for this repo, if you are hoping to implement RL algorithms on E+ building simulationss at runtime. 
+
+<ins>In order of increasing complexity</ins>:
 
 - You want to use an existing EMS interface template and linked building model to only implement RL control
 - You have an existing E+ building model (with *no* model or .idf modification needed) that you want to link and 
@@ -63,24 +64,24 @@ link and implement RL control on
 **EmsPy**'s usage for these use-cases is all the same - the difference is what must be done beforehand. Creating building models, 
 understanding their file makeup, configuring HVAC systems, modifying .idf files, and adding/linking EMS variables and actuators brings extra challenges.
 This guide will focus on utilizing **EmsPy** (EMS-RL wrapper). The former components, before utilizing **EmsPy**, will
-be discussed briefly at the end, with basic guidance to get you started in the right direction. 
+be discussed elsewhere, with basic guidance to get you started in the right direction if you are new to EnergyPlus and/or EMS 
 
-At the very least, even if solely using **EmsPy** for a given model, it is important to understand the EMS metrics of a given
-model: <ins>*variables, internal variables, meters, actuators,* and *weather*</ins>. These represent the types of simulation data exposed
-through EMS that can be used to build the state and action space of your control framework. 
+At the very least, even if solely using **EmsPy** for a given model, it is important to understand the types EMS metrics of a given
+model: <ins>*variables, internal variables, meters, actuators,* and *weather*</ins>. These represent specific types of simulation data exposed
+through EMS that can be used to build the state and action space of your control framework. For each type, there are many specific entities within the building model whose data can be looked up throughout the simulation. For instance, at each timestep for a specific calling point, I may use a *meter* to track all HVAC energy use, *variables* to track zone temperatures and occupancy schedules, and thermostat *actuator* to control the heating and cooling setpoints of a zone. The calling point I choose, say `callback_after_predictor_before_hvac_managers` determines exactly when in the flow of the simulation-solver that my callback function will be called.
+
 See the *9.5 EMS Application Guide* and *9.5 Input Output Reference* documents for detailed documentation on these topics at either 
 [EnergyPlus Documentation](https://energyplus.net/documentation) or [Big Ladder Software](https://bigladdersoftware.com/epx/docs/9-5/index.html).
   
-### How to use EmsPy with an E+ Model:
+### How to use EmsPy with an E+ Model
  
-This guide follows the design of the template Python scripts provided. The integration of the control (RL) algorithm and 
-the flow of the calling points and callback functions at runtime is depicted in the image above. The image below loosely
-represents the logic of EmsPy and its usage.
+This guide provides a *very brief* overview of how to use EmsPy. Please see the Wiki, code documentation, and example scripts for more detailed information. The integration of the control (RL) algorithm and the flow of the calling points and callback functions at runtime is depicted in the image above. The image below loosely
+represents the logic of the **EmsPy** API.
 
-<img src="https://user-images.githubusercontent.com/65429130/121730967-598de300-cabe-11eb-9364-051bb993e8d1.png" width = "750">
+<img src="https://user-images.githubusercontent.com/65429130/158071407-116125be-18e4-4e94-bbfe-a8e1860aa86e.PNG" width = "750">
 
 **1.** First, you will create an **BcaEnv object** (Building Control Agent + Environment) from proper inputs.
-`BcaEnv` is a simplified UI that wraps `EmsPy` that should provide all necessary functionallity. Using `EmsPy`, this object encapsulates your building simulation environment and helps manage all EMS data produced and recorded during runtime. 
+`BcaEnv` is a simplified UI that wraps `EmsPy` that should provide all necessary functionallity. Using `EmsPy`, this object encapsulates your building simulation environment and helps manage all your specificed EMS data produced and recorded during runtime. 
 The inputs include paths to the E+ directory and the building model .idf file to be simulated, information about all types of desired EMS metrics, and the simulation timestep.
 Specifying the callback functions (organized by *Observation* and *Actuation* functions) with their linked calling points will come later.
 
@@ -101,105 +102,237 @@ sim_environment = BcaEnv(ep_path: str, ep_idf_to_run: str, timesteps: int, tc_va
     - Actuators: `'user_actuator_name': ['component_type', 'control_type', 'actuator_key']` elements of `tc_actuator` dict
     - Weathers: `'user_weather_name': 'weather_name'` elements of `tc_weather` dict
  
-Once this has been completed, your ***BcaEnv*** instance has all it needs to manage your runtime EMS needs - implementing 
+Once this has been completed, your ***BcaEnv*** object has all it needs to manage your runtime EMS needs - implementing 
 various data collection/organization and dataframes attributes, as well as finding the EMS handles from the ToCs, etc. 
 
-***Note:*** *At this point, the <ins>simulation can be ran</ins> but nothing useful will happen (in terms of control or data collection) as no calling points, callback functions, or actuation functions have been defined and linked.* 
+***Note:*** *At this point, the <ins>simulation can be ran</ins> but nothing useful will happen (in terms of control or data collection) as no calling points, callback functions, or actuation functions have been defined and linked. It may be helpful to run the simulation with only this 'environment' object initialization and then review its contents to see all that the class has created.*
 
-*It may be helpful to run the simulation with only this 'environment' object initialization and then review its contents to see all that the class has created. 
-
-**2.** Next, you must define the "Calling Point & Actuation Function dictionary" to define and enable callback functionality at runtime. This dictionary links a calling point(s) with a callback function(s) and the  arguments related to data/actuation update frequencies.
+**2.** Next, you must define the "Calling Point & Callback Function dictionary" with `BcaEnv.set_calling_point_and_callback_function()` to define and enable your callback functionality at runtime. This dictionary links a calling point(s) to a callback function(s) with optionally 1) **Obvservation** function, 2) **Actuation** function, 3) and the arguments dictating at what frequncy (with respect to the simulation timestep) these observation and actuations occur.
  A given <ins>calling point</ins> defines when a *linked* <ins>callback function</ins> (and optionally an embedded <ins>actuation function</ins>) will be ran during the simulation timestep calculations.
 The diagram above represents the simulation flow and RL integration with calling points and callback functions. 
- 
- The Calling Point & Actuation Function dictionary should be built one key-value at a time using the method:
 
-# TODO update new method arguments
+*A brief word on **Observation** and **Actuation** functions*: 
+
+- Each callback function (linked with a specific calling point) permits two custom functions to be attached. One is termed the **Observation** function and the other the **Actuation** function, and they're meant for capturing the state and taking actions, respectively. Your actual usage and implementation of these functions - if at all since they are optional, and only 1 is necessary for custom control and data tracking - is up to you. The two main differences is that the **Observation** function is called *before* the **Actuation** function in the callback and what each should/can return when called. The **Obvservation** function can return 'reward(s)' to be automatically tracked. And the **Actuation** function must return an actuation dictionary, linking an actuator to its new setpoint value. Technically, for control purposes, you could do everything in just the **Actuation** function; but the **Observation** function grants extra flexibility to accessing the state and helpful automatic reward tracking. Also, since *each calling point* can have its own callback function, many seperate **Observation** and **Actuation** functions could be used across a single timestep, however, these usage is more advanced and may only be needed is special circumstances.
+ 
+ The Calling Point & Actuation Function dictionary should be built one key-value at a time using the method for each desired calling point callback:
+
  ```python
  BcaEnv.set_calling_point_and_callback_function(
-    calling_point: str, actuation_fxn, update_state: bool, update_state_freq: int = 1, update_act_freq: int = 1)
+    calling_point: str, observation_function, actuation_function, update_state: bool, update_observation_frequency: int = 1, update_actuation_frequency: int = 1)
  ```
 - `calling_point` a single calling point from the available list `EmsPy.available_calling_points`
-- `actuation_fxn` the control algorithm function (one of potentially many throughout a timestep), which <ins>must take no argument and return a dictionary</ins> (or `None` if no custom actuation) of actuator name(s) *(key)* and floating point setpoint value(s) *(value)* to be implemented at the linked calling point. 
-    Be sure to pass the function, not its result.
+- `actuation_function` the control algorithm function, which <ins>must take no arguments and must return a dictionary</ins> (or `None` if no custom actuation) of actuator name(s) *(key)* and floating point setpoint value(s) *(value)* to be implemented at the linked calling point. 
+    Be sure to pass the function itself, don't call it.
     - **Note:** due to the scope and passing of the callback function, please use a custom class and instantiate a global object in your script to encapsulate any custom data for the control algorithm (RL agent parameters) and then utilize the global object in your actuation function. The callback functions can reference object/class data at runtime.
-    - ***Warning:*** *actual actuator **setpoint values** can be floating point, integer, and boolean values (or `None` to relinquish control back to E+) and have a variety of input domain spans. Since the API input <ins>must be floating point</ins>, the setpoint values will be automatically cast to nearest integer (1/2 rounds up) and all but ~1.0 casts to False, respective to the specific actuator's needs.
-    **Internal variables** may be able to be used to understand an actuators input domain. You must have an understanding of the actuator(s) to function as intended.*  
-- `update_state` T/F to whether or not the entire EMS ToCs should be updated for that calling point, this acts as a complete state update (use `BcaEnv.update_ems_data` for more selective udpates at specific calling points, if needed)
-- `update_state_freq` the number of simulation timesteps in between each state update, default is every timestep
-- `update_act_freq` set to the number of simulation timesteps in between each actuation function call, default is every timestep
+    - ***Warning:*** *actual actuator **setpoint values** can be floating point, integer, and boolean values (or `None` to relinquish control back to E+) and have a variety of input domain spans. Since the API input <ins>must be floating point</ins>, the setpoint values will be automatically cast to nearest integer (1/2 rounds up) and all but ~1.0 casts to False, respective to the specific actuator's needs. These details are defined in the E+ EMS API Documentation
+    **Internal variables** may be able to be used to understand an actuators input domain. You must have an understanding of the actuator(s) to control them as intended.*  
+- `update_state` T/F to whether or not the entire EMS ToCs' data should be updated from simulation for that calling point, this acts as a complete state update (use `BcaEnv.update_ems_data` for more selective udpates at specific calling points, if needed)
+- `update_observation_frequency` the number of simulation timesteps between each time the associated **Observation** function is called, default is every timestep
+- `update_actuation_frequnecy` the number of simulation timesteps between each time the associated **Actuation** function called, default is every timestep
    
 ***Note:*** *there are multiple calling points per timestep, each signifying the start/end of an event in the process. The majority of calling points occur consistently throughout the simulation, but several occur *once* before during simulation setup.* 
 
-The user-defined `actuation_function` should encapsulate any sort of control algorithm (more than one can be created and linked to unique calling points, but it's likely that only 1 will be used as the entire RL algorithm). Using the 'agent/environment' object attributes, or better, the methods `BcaEnv.get_ems_data` and `BcaEnv.get_weather_forecast`, to collect state information, a control algorithm/function can be created and passed. Using a decorator function, this actuation function will automatically be attached to a base callback function and linked to the defined calling point. At that calling point during runtime, the actuation function will be ran and the returned actuator dict will be passed to the simulation to update actuator setpoint values. 
-The rest of the arguments are also automatically passed to the base-callback function to dictate the update frequency of state data and actuation. This means that data collection or actuation updates do not need to happen every timestep. 
+The user-defined `actuation_function` should encapsulate any sort of control algorithm (more than one can be created and linked to unique calling points, but it's likely that only 1 will be used as the entire RL algorithm). Using the methods `BcaEnv.get_ems_data` and `BcaEnv.get_weather_forecast`, to collect state information, a control algorithm/function can be created and its actions returned. In `emspy` using a decorator function, this **Actuation** function will automatically be attached to the standard callback function and linked to the defined calling point. At that calling point during runtime, the actuation function will be ran and the returned actuator dict will be passed to the simulation to update actuator setpoint values. 
+The rest of the arguments are also automatically passed to the base-callback function to dictate the update frequency of observation and actuation. This means that data collection or actuation updates do not need to happen every timestep or in tandem with each other. 
 
-```python
-BcaEnv.get_ems_data(ems_metric_list: list, time_rev_index: list=[0]) -> list
+### Please refer to the Wiki or `EmsPy` and `BcaEnv` code documentation on how to utilize this API.
+
+Below, is a sample sub-script of EmsPy usage: controlling the thermostat setpoints of a single zone of a 5-Zone Office Building based on the time of day. 
 ```
-- This method will return an ordered nested list of ordered data points for then given EMS metrics and timing index(s), or entire EMS type ToC
-- Its intended use is to return updated state information at each timestep, it can be called as many times as need in a actuation function. 
-- This method must be used during runtime from an actuation function 
-- `ems_metric_list` pass one or more EMS metrics (of any type) OR ONLY a single EMS type (var, intvar, meter, actuator, weather) in a list. Passing an EMS type will utilize and return data for that entire EMS ToC
-- `time_rev_index` indicates the time index of the data you want to return, indexing backwards from the most recent timestep at 0. Leaving this list empty [ ] will return the entire data list collected thus far in the simulation for each given EMS metric. *Note that data will only be returned once the number of simulation timesteps has surpassed the maximum prior-time index given* 
+"""
+This is a simple example to show how to set up and simulation and utilize some of emspy's features.
+This implements simple rule-based thermostat control based on the time of day, for a single zone of a 5-zone office
+building. Other data is tracked and reported just for example.
 
-```python
-BcaEnv.get_weather_forecast(when: str, weather_metrics: list, hour: int, zone_ts: int) -> list
+This is a simplified/cleaned version (no MdpManager, less comments, etc.) of the 'simple_emspy_control.py' example,
+meant for the README.md.
+"""
+import datetime
+import matplotlib.pyplot as plt
+
+from emspy import EmsPy, BcaEnv
+
+
+# -- FILE PATHS --
+# * E+ Download Path *
+ep_path = 'A:/Programs/EnergyPlusV9-5-0/'  # path to E+ on system
+# IDF File / Modification Paths
+idf_file_name = r'BEM_simple/simple_office_5zone_April.idf'  # building energy model (BEM) IDF file
+# Weather Path
+ep_weather_path = r'BEM_simple/5B_USA_CO_BOULDER_TMY2.epw'  # EPW weather file
+
+
+# STATE SPACE (& Auxiliary Simulation Data)
+
+zn0 = 'Core_ZN ZN'
+
+tc_intvars = {}  # empty, don't need any
+
+tc_vars = {
+    # Building
+    'hvac_operation_sched': ('Schedule Value', 'OfficeSmall HVACOperationSchd'),  # is building 'open'/'close'?
+    # -- Zone 0 (Core_Zn) --
+    'zn0_temp': ('Zone Air Temperature', zn0),  # deg C
+    'zn0_RH': ('Zone Air Relative Humidity', zn0),  # %RH
+}
+
+tc_meters = {
+    # Building-wide
+    'electricity_facility': ('Electricity:Facility'),  # J
+    'electricity_HVAC': ('Electricity:HVAC'),  # J
+    'electricity_heating': ('Heating:Electricity'),  # J
+    'electricity_cooling': ('Cooling:Electricity'),  # J
+    'gas_heating': ('NaturalGas:HVAC')  # J
+}
+
+tc_weather = {
+    'oa_rh': ('outdoor_relative_humidity'),  # %RH
+    'oa_db': ('outdoor_dry_bulb'),  # deg C
+    'oa_pa': ('outdoor_barometric_pressure'),  # Pa
+    'sun_up': ('sun_is_up'),  # T/F
+    'rain': ('is_raining'),  # T/F
+    'snow': ('is_snowing'),  # T/F
+    'wind_dir': ('wind_direction'),  # deg
+    'wind_speed': ('wind_speed')  # m/s
+}
+
+# ACTION SPACE
+tc_actuators = {
+    # HVAC Control Setpoints
+    'zn0_cooling_sp': ('Zone Temperature Control', 'Cooling Setpoint', zn0),  # deg C
+    'zn0_heating_sp': ('Zone Temperature Control', 'Heating Setpoint', zn0),  # deg C
+}
+
+# -- Simulation Params --
+calling_point_for_callback_fxn = EmsPy.available_calling_points[6]  # 5-15 valid for timestep loop during simulation
+sim_timesteps = 6  # every 60 / sim_timestep minutes (e.g 10 minutes per timestep)
+
+# -- Create Building Energy Simulation Instance --
+sim = BcaEnv(
+    ep_path=ep_path,
+    ep_idf_to_run=idf_file_name,
+    timesteps=sim_timesteps,
+    tc_vars=tc_vars,
+    tc_intvars=tc_intvars,
+    tc_meters=tc_meters,
+    tc_actuator=tc_actuators,
+    tc_weather=tc_weather
+)
+
+class Agent:
+    """
+    Create agent instance, which is used to create actuation() and observation() functions (both optional) and maintain
+    scope throughout the simulation.
+    Since EnergyPlus' Python EMS using callback functions at calling points, it is helpful to use a object instance
+    (Agent) and use its methods for the callbacks. * That way data from the simulation can be stored with the Agent
+    instance.
+    """
+    def __init__(self, bca: BcaEnv):
+        self.bca = bca
+
+        # simulation data state
+        self.zn0_temp = None  # deg C
+        self.time = None
+
+    def observation_function(self):
+        # -- FETCH/UPDATE SIMULATION DATA --
+        self.time = self.bca.get_ems_data(['t_datetimes'])
+
+        # Get data from simulation at current timestep (and calling point) using ToC names
+        var_data = self.bca.get_ems_data(list(self.bca.tc_var.keys()))
+        meter_data = self.bca.get_ems_data(list(self.bca.tc_meter.keys()))
+        weather_data = self.bca.get_ems_data(list(self.bca.tc_weather.keys()))
+
+        # get specific values from MdpManager based on name
+        self.zn0_temp = var_data[1]  # index 1st element to get zone temps, based on EMS Variable ToC
+        # OR
+        self.zn0_temp = self.bca.get_ems_data(['zn0_temp'])
+
+        # print reporting
+        if self.time.hour % 2 == 0 and self.time.minute == 0:  # report every 2 hours
+            print(f'\n\nTime: {str(self.time)}')
+            print('\n\t* Observation Function:')
+            print(f'\t\tVars: {var_data}\n\t\tMeters: {meter_data}\n\t\tWeather:{weather_data}')
+            print(f'\t\tZone0 Temp: {round(self.zn0_temp,2)} C')
+
+    def actuation_function(self):
+        work_hours_heating_setpoint = 18  # deg C
+        work_hours_cooling_setpoint = 22  # deg C
+
+        off_hours_heating_setpoint = 15  # deg C
+        off_hours_coolng_setpoint = 30  # deg C
+
+        work_day_start = datetime.time(6, 0)  # day starts 6 am
+        work_day_end = datetime.time(20, 0)  # day ends at 8 pm
+
+        # Change thermostat setpoints based on time of day
+        if work_day_start < self.time.time() < work_day_end:  #
+            # during workday
+            heating_setpoint = work_hours_heating_setpoint
+            cooling_setpoint = work_hours_cooling_setpoint
+            thermostat_settings = 'Work-Hours Thermostat'
+        else:
+            # off work
+            heating_setpoint = off_hours_heating_setpoint
+            cooling_setpoint = off_hours_coolng_setpoint
+            thermostat_settings = 'Off-Hours Thermostat'
+
+        # print reporting
+        if self.time.hour % 2 == 0 and self.time.minute == 0:  # report every 2 hours
+            print(f'\n\t* Actuation Function:'
+                  f'\n\t\t*{thermostat_settings}*'
+                  f'\n\t\tHeating Setpoint: {heating_setpoint}'
+                  f'\n\t\tCooling Setpoint: {cooling_setpoint}\n'
+                  )
+
+        # return actuation dictionary, referring to actuator EMS variables set
+        return {
+            'zn0_heating_sp': heating_setpoint,
+            'zn0_cooling_sp': cooling_setpoint
+        }
+
+
+#  --- Create agent instance ---
+my_agent = Agent(sim)
+
+# --- Set your callback function (observation and/or actuation) function for a given calling point ---
+sim.set_calling_point_and_callback_function(
+    calling_point=calling_point_for_callback_fxn,
+    observation_function=my_agent.observation_function,  # optional function
+    actuation_function=my_agent.actuation_function,  # optional function
+    update_state=True,  # use this callback to update the EMS state
+    update_observation_frequency=1,  # linked to observation update
+    update_actuation_frequency=1  # linked to actuation update
+)
+
+# -- RUN BUILDING SIMULATION --
+sim.run_env(ep_weather_path)
+sim.reset_state()  # reset when done
+
+# -- Sample Output Data --
+output_dfs = sim.get_df()  # LOOK at all the data collected here, custom DFs can be made too
+
+# -- Plot Results --
+fig, ax = plt.subplots()
+output_dfs['var'].plot(y='zn0_temp', use_index=True, ax=ax)
+output_dfs['weather'].plot(y='oa_db', use_index=True, ax=ax)
+output_dfs['meter'].plot(y='electricity_HVAC', use_index=True, ax=ax, secondary_y=True)
+output_dfs['actuator'].plot(y='zn0_heating_sp', use_index=True, ax=ax)
+output_dfs['actuator'].plot(y='zn0_cooling_sp', use_index=True, ax=ax)
+plt.title('Zn0 Temps and Thermostat Setpoint for Year')
+
+# Analyze results in "out" folder, DView, or directly from your Python variables and Pandas Dataframes
+
 ```
-- This method is used to fetch and return an ordered list of future weather data, resembling weather forecasts. Weather events that have already occurred in simulation can be gathered using `BcaEnv.get_ems_data`
-- This method must be used during runtime from an actuation function 
-- `weather_metrics` is the list of user-defined weather variable names, defined in the weather ToC, you want to fetch data for 
-- `when` either 'today' or 'tomorrow' dictates which day is in question, relative to current simulation time
-- `hour` the hour of the day to collect the weather forecast data
-- `zone_ts` the timestep within the given hour you want to collect weather forecast data for
+<ins>5 Zone Office Building Model</ins>
 
- ***Note*** *: If you wish to use callback functions just for <ins>defualt data collection</ins> pass `None` as the actuation function. If you wish to use the callback functions for custom data collection and/or other actions other than any <ins>actuation/control</ins> at a specific calling point, implement an actuation function that returns `None` as the actuation dict.*
+<img src="https://user-images.githubusercontent.com/65429130/158045813-914259d1-a0ba-45a5-b81d-35520e685b23.PNG" width = "750">
 
-Also, if there is a need to <ins>update</ins> specific EMS metrics at a certain calling point separately from the rest (all EMS ToCs), you can use the method below within an actuation function to update specific EMS metrics. However, this <ins>does not also exclude them</ins> from the `state_update` that updates ALL EMS metrics.
+<ins>Sample Results for the Month of April</ins>
 
-```python
-BcaEnv.update_ems_data(ems_metric_list: list, return_data: bool) -> list
-```
-- This method will update the given EMS metrics, or entire EMS type ToC and optionally return an ordered list of the updated data 
-- Its intended use is if you want to update specific EMS data (or types) at a unique calling point, separate from the default state update of all EMS ToCs at another calling point.
-- This method must be used during runtime from an actuation function 
-- `ems_metric_list` pass one or more EMS metrics (of any type) OR ONLY a single EMS type (var, intvar, meter, actuator, weather) in a list. Passing an EMS type will utilize that entire EMS ToC
-- `return_data` if True, this will automatically return the ordered list of data from `Bca.Env.get_ems_data`   
+<img src="https://user-images.githubusercontent.com/65429130/158045876-da914d81-f705-43c6-9815-5c5c5cff9778.PNG" width = "750">
 
- ***Warning*** *: EMS data (and actuation) can be 'updated' by the user (but not necessarily internally by the simulation) <ins>for each calling point</ins> (and actuation function) assigned within a single timestep. You likely want to avoid this and manually only implement one state update `state_update=True` per timestep. Otherwise, you will screw up zone timestep increments (with current software design) and may accidentally be collecting data and actuating multiple times per timestep.
-Just because you want to update data/actuation does not necessary mean it will be implmented at all or how you intended.
-An understanding of calling points and when to collect data or actuate is ***crucial*** - Please see the [EMS Application Guide](https://energyplus.net/documentation) for more information on calling points.*
-  
-           
-**TIPS**:
-- *(in progress)*
-
-**CAUTION**:
-- Make sure your hourly timestep matches that of your EnergyPlus .idf model
-- EMS data (and actuation) can be 'updated' by the user (but not necessarily internally by the simulation) <ins>for each calling point</ins> (and actuation function) assigned within a single timestep. You likely want to avoid this and manually only implement one state update `state_update=True` per timestep. Otherwise, you will screw up zone timestep increments (with current software design) and may accidentally be collecting data and actuating multiple times per timestep.
-Just because you want to update data/actuation does not necessary mean it will be implmented at all or how you intended.
-An understanding of calling points and when to collect data or actuate is ***crucial*** - Please see the [EMS Application Guide](https://energyplus.net/documentation) for more information on calling points.
-
-### Future Planned Functionality & Repo Improvements:
-- EmsPy improvements
-  - more automatic user oversight to verify that user's have not violated logical errors in calling points, callback functions, and/or EMS updates
-  - verify that given model timestep matches the .idf file, OR have it overwrite the model if not (say using openstudio somehow)
-  - assist users in understanding actuator input ranges
-  - further detailed documentation
-- Data Dashboard class to automatically compile E+ performance and RL learning data into subplots via Matplotlib
-- Openstudio wrapper class to assist in simple modifications of the .idf/.osm that impact simulation experiments (timesteps, start-end dates, etc.)
-- Provide tips to documentation on how to construct and/or modify building models to be linked with EmsPy 
-- A handful of various building models already set up with EmsPy so that user's can just focus on control algorithms given readily available state and action space, and pre-linked calling points. 
-
-
-### Creating an E+ Building Energy Model:
-- TOOD
-
-### Setting up a E+ Model for EMS API Usage:
-- TODO
-
-### Linking EMS Metrics to Your EmsPy Script:
-- TODO
 
 ### References:
 - *(in progress)*
