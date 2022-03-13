@@ -42,16 +42,17 @@ to resemble OpenAI's Gym Environment API. This standardization building models a
 - pyenergyplus Python package (included in E+ download)
 - [openstudio Python package](https://pypi.org/project/openstudio/) (not currently used, but plan to add functionality)
 
-### Usage Explanation:
+### Overview
 
 The diagram below depicts the RL-interaction-loop within a timestep at simulation runtime. Because of the unchangeable technicalities of the 
 interaction between EMS and the E+ simulator - through the use of callback function(s) and the many calling points available
- per timestep - the underlying RL interface and algorithm must be implemented in a very specific manner, which will be explained in 
-detail below. 
+ per timestep - the underlying RL interface and algorithm must be implemented in a very specific manner. This was done in a way as to provide maximal flexibility and not constrain usage, but at the inherent cost of some extra complexity and greater learning curve. However, once understood, it is simple to use and fit to your custom needs. This be explained in detail below and in the Wiki pages. 
 
-<img src="https://user-images.githubusercontent.com/65429130/119517258-764bbc00-bd45-11eb-97bf-1af9ab0444cb.png" width = "750"> 
+<img src="https://user-images.githubusercontent.com/65429130/158069215-6a4c654d-5658-4765-8828-0728fcc34c88.PNG" width = "750"> 
 
-<br/>There are likely 4 main use-cases for this repo, if you are hoping to implement RL algorithms at runtime. <ins>In order of increasing complexity</ins>:
+<br/>There are likely 4 main use-cases for this repo, if you are hoping to implement RL algorithms on E+ building simulationss at runtime. 
+
+<ins>In order of increasing complexity</ins>:
 
 - You want to use an existing EMS interface template and linked building model to only implement RL control
 - You have an existing E+ building model (with *no* model or .idf modification needed) that you want to link and 
@@ -63,24 +64,24 @@ link and implement RL control on
 **EmsPy**'s usage for these use-cases is all the same - the difference is what must be done beforehand. Creating building models, 
 understanding their file makeup, configuring HVAC systems, modifying .idf files, and adding/linking EMS variables and actuators brings extra challenges.
 This guide will focus on utilizing **EmsPy** (EMS-RL wrapper). The former components, before utilizing **EmsPy**, will
-be discussed briefly at the end, with basic guidance to get you started in the right direction. 
+be discussed elsewhere, with basic guidance to get you started in the right direction if you are new to EnergyPlus and/or EMS 
 
-At the very least, even if solely using **EmsPy** for a given model, it is important to understand the EMS metrics of a given
-model: <ins>*variables, internal variables, meters, actuators,* and *weather*</ins>. These represent the types of simulation data exposed
-through EMS that can be used to build the state and action space of your control framework. 
+At the very least, even if solely using **EmsPy** for a given model, it is important to understand the types EMS metrics of a given
+model: <ins>*variables, internal variables, meters, actuators,* and *weather*</ins>. These represent specific types of simulation data exposed
+through EMS that can be used to build the state and action space of your control framework. For each type, there are many specific entities within the building model whose data can be looked up throughout the simulation. For instance, at each timestep for a specific calling point, I may use a *meter* to track all HVAC energy use, *variables* to track zone temperatures and occupancy schedules, and thermostat *actuator* to control the heating and cooling setpoints of a zone. The calling point I choose, say `callback_after_predictor_before_hvac_managers` determines exactly when in the flow of the simulation-solver that my callback function will be called.
+
 See the *9.5 EMS Application Guide* and *9.5 Input Output Reference* documents for detailed documentation on these topics at either 
 [EnergyPlus Documentation](https://energyplus.net/documentation) or [Big Ladder Software](https://bigladdersoftware.com/epx/docs/9-5/index.html).
   
-### How to use EmsPy with an E+ Model:
+### How to use EmsPy with an E+ Model
  
-This guide follows the design of the template Python scripts provided. The integration of the control (RL) algorithm and 
-the flow of the calling points and callback functions at runtime is depicted in the image above. The image below loosely
-represents the logic of EmsPy and its usage.
+This guide provides a *very brief* overview of how to use EmsPy. Please see the Wiki, code documentation, and example scripts for more detailed information. The integration of the control (RL) algorithm and the flow of the calling points and callback functions at runtime is depicted in the image above. The image below loosely
+represents the logic of the **EmsPy** API.
 
-<img src="https://user-images.githubusercontent.com/65429130/121730967-598de300-cabe-11eb-9364-051bb993e8d1.png" width = "750">
+<img src="https://user-images.githubusercontent.com/65429130/158070153-2f46ecdb-6f2d-499c-a384-2f1382e5d379.PNG" width = "750">
 
 **1.** First, you will create an **BcaEnv object** (Building Control Agent + Environment) from proper inputs.
-`BcaEnv` is a simplified UI that wraps `EmsPy` that should provide all necessary functionallity. Using `EmsPy`, this object encapsulates your building simulation environment and helps manage all EMS data produced and recorded during runtime. 
+`BcaEnv` is a simplified UI that wraps `EmsPy` that should provide all necessary functionallity. Using `EmsPy`, this object encapsulates your building simulation environment and helps manage all your specificed EMS data produced and recorded during runtime. 
 The inputs include paths to the E+ directory and the building model .idf file to be simulated, information about all types of desired EMS metrics, and the simulation timestep.
 Specifying the callback functions (organized by *Observation* and *Actuation* functions) with their linked calling points will come later.
 
@@ -101,33 +102,37 @@ sim_environment = BcaEnv(ep_path: str, ep_idf_to_run: str, timesteps: int, tc_va
     - Actuators: `'user_actuator_name': ['component_type', 'control_type', 'actuator_key']` elements of `tc_actuator` dict
     - Weathers: `'user_weather_name': 'weather_name'` elements of `tc_weather` dict
  
-Once this has been completed, your ***BcaEnv*** instance has all it needs to manage your runtime EMS needs - implementing 
+Once this has been completed, your ***BcaEnv*** object has all it needs to manage your runtime EMS needs - implementing 
 various data collection/organization and dataframes attributes, as well as finding the EMS handles from the ToCs, etc. 
 
 ***Note:*** *At this point, the <ins>simulation can be ran</ins> but nothing useful will happen (in terms of control or data collection) as no calling points, callback functions, or actuation functions have been defined and linked.* 
 
 *It may be helpful to run the simulation with only this 'environment' object initialization and then review its contents to see all that the class has created. 
 
-**2.** Next, you must define the "Calling Point & Actuation Function dictionary" to define and enable callback functionality at runtime. This dictionary links a calling point(s) with a callback function(s) and the  arguments related to data/actuation update frequencies.
+**2.** Next, you must define the "Calling Point & Callback Function dictionary" with `BcaEnv.set_calling_point_and_callback_function()` to define and enable your callback functionality at runtime. This dictionary links a calling point(s) to a callback function(s) with optionally 1) **Obvservation** function, 2) **Actuation** function, 3) and the arguments dictating at what frequncy (with respect to the simulation timestep) these observation and actuations occur.
  A given <ins>calling point</ins> defines when a *linked* <ins>callback function</ins> (and optionally an embedded <ins>actuation function</ins>) will be ran during the simulation timestep calculations.
 The diagram above represents the simulation flow and RL integration with calling points and callback functions. 
+
+*A brief word on **Observation** and **Actuation** functions*: 
+
+Each callback function (linked with a specific calling point) permits two custom functions to be attached. One is termed the **Observation** function and the other the **Actuation** function, and they're meant for capturing the state and taking actions, respectively. Your actual usage and implementation of these functions - if at all since they are optional, and only 1 is necessary for custom control and data tracking - is up to you. The two main differences is that the **Observation** function is called *before* the **Actuation** function in the callback and what each should/can return when called. The **Obvservation** function can return 'reward(s)' to be automatically tracked. And the **Actuation** function must return an actuation dictionary, linking an actuator to its new setpoint value. Technically, for control purposes, you could do everything in just the **Actuation** function; but the **Observation** function grants extra flexibility to accessing the state and helpful automatic reward tracking. Also, since *each calling point* can have its own callback function, many seperate **Observation** and **Actuation** functions could be used across a single timestep, however, these usage is more advanced and may only be needed is special circumstances.
  
- The Calling Point & Actuation Function dictionary should be built one key-value at a time using the method:
+ The Calling Point & Actuation Function dictionary should be built one key-value at a time using the method for each desired calling point callback:
 
 # TODO update new method arguments
  ```python
  BcaEnv.set_calling_point_and_callback_function(
-    calling_point: str, actuation_fxn, update_state: bool, update_state_freq: int = 1, update_act_freq: int = 1)
+    calling_point: str, observation_function, actuation_function, update_state: bool, update_observation_frequency: int = 1, update_actuation_frequency: int = 1)
  ```
 - `calling_point` a single calling point from the available list `EmsPy.available_calling_points`
-- `actuation_fxn` the control algorithm function (one of potentially many throughout a timestep), which <ins>must take no argument and return a dictionary</ins> (or `None` if no custom actuation) of actuator name(s) *(key)* and floating point setpoint value(s) *(value)* to be implemented at the linked calling point. 
-    Be sure to pass the function, not its result.
+- `actuation_function` the control algorithm function, which <ins>must take no arguments and must return a dictionary</ins> (or `None` if no custom actuation) of actuator name(s) *(key)* and floating point setpoint value(s) *(value)* to be implemented at the linked calling point. 
+    Be sure to pass the function itself, don't call it.
     - **Note:** due to the scope and passing of the callback function, please use a custom class and instantiate a global object in your script to encapsulate any custom data for the control algorithm (RL agent parameters) and then utilize the global object in your actuation function. The callback functions can reference object/class data at runtime.
-    - ***Warning:*** *actual actuator **setpoint values** can be floating point, integer, and boolean values (or `None` to relinquish control back to E+) and have a variety of input domain spans. Since the API input <ins>must be floating point</ins>, the setpoint values will be automatically cast to nearest integer (1/2 rounds up) and all but ~1.0 casts to False, respective to the specific actuator's needs.
-    **Internal variables** may be able to be used to understand an actuators input domain. You must have an understanding of the actuator(s) to function as intended.*  
-- `update_state` T/F to whether or not the entire EMS ToCs should be updated for that calling point, this acts as a complete state update (use `BcaEnv.update_ems_data` for more selective udpates at specific calling points, if needed)
-- `update_state_freq` the number of simulation timesteps in between each state update, default is every timestep
-- `update_act_freq` set to the number of simulation timesteps in between each actuation function call, default is every timestep
+    - ***Warning:*** *actual actuator **setpoint values** can be floating point, integer, and boolean values (or `None` to relinquish control back to E+) and have a variety of input domain spans. Since the API input <ins>must be floating point</ins>, the setpoint values will be automatically cast to nearest integer (1/2 rounds up) and all but ~1.0 casts to False, respective to the specific actuator's needs. These details are defined in the E+ EMS API Documentation
+    **Internal variables** may be able to be used to understand an actuators input domain. You must have an understanding of the actuator(s) to control them as intended.*  
+- `update_state` T/F to whether or not the entire EMS ToCs' data should be updated from simulation for that calling point, this acts as a complete state update (use `BcaEnv.update_ems_data` for more selective udpates at specific calling points, if needed)
+- `update_observation_frequency` the number of simulation timesteps between each time the associated **Observation** function is called, default is every timestep
+- `update_actuation_frequnecy` the number of simulation timesteps between each time the associated **Actuation** function called, default is every timestep
    
 ***Note:*** *there are multiple calling points per timestep, each signifying the start/end of an event in the process. The majority of calling points occur consistently throughout the simulation, but several occur *once* before during simulation setup.* 
 
