@@ -10,5 +10,7 @@ The same functionality implemented in this script could be done much more simply
 to the more complex features that are really useful when working with more complicated RL control tasks; Such as the use
 of the `MdpManager` to handle all of the simulation data and EMS variables.
 
-<img src="" width = "750">
-<img src="" width = "750">
+5 Zone Office Building Model
+<img src="![Office_5zone_picture](https://user-images.githubusercontent.com/65429130/158045813-914259d1-a0ba-45a5-b81d-35520e685b23.PNG)" width = "750">
+Sample Results for the Month of April
+<img src="![example_output_April](https://user-images.githubusercontent.com/65429130/158045876-da914d81-f705-43c6-9815-5c5c5cff9778.PNG)" width = "750">
