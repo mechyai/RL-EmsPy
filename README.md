@@ -105,9 +105,7 @@ sim_environment = BcaEnv(ep_path: str, ep_idf_to_run: str, timesteps: int, tc_va
 Once this has been completed, your ***BcaEnv*** object has all it needs to manage your runtime EMS needs - implementing 
 various data collection/organization and dataframes attributes, as well as finding the EMS handles from the ToCs, etc. 
 
-***Note:*** *At this point, the <ins>simulation can be ran</ins> but nothing useful will happen (in terms of control or data collection) as no calling points, callback functions, or actuation functions have been defined and linked.* 
-
-*It may be helpful to run the simulation with only this 'environment' object initialization and then review its contents to see all that the class has created. 
+***Note:*** *At this point, the <ins>simulation can be ran</ins> but nothing useful will happen (in terms of control or data collection) as no calling points, callback functions, or actuation functions have been defined and linked. It may be helpful to run the simulation with only this 'environment' object initialization and then review its contents to see all that the class has created.*
 
 **2.** Next, you must define the "Calling Point & Callback Function dictionary" with `BcaEnv.set_calling_point_and_callback_function()` to define and enable your callback functionality at runtime. This dictionary links a calling point(s) to a callback function(s) with optionally 1) **Obvservation** function, 2) **Actuation** function, 3) and the arguments dictating at what frequncy (with respect to the simulation timestep) these observation and actuations occur.
  A given <ins>calling point</ins> defines when a *linked* <ins>callback function</ins> (and optionally an embedded <ins>actuation function</ins>) will be ran during the simulation timestep calculations.
@@ -115,7 +113,7 @@ The diagram above represents the simulation flow and RL integration with calling
 
 *A brief word on **Observation** and **Actuation** functions*: 
 
-Each callback function (linked with a specific calling point) permits two custom functions to be attached. One is termed the **Observation** function and the other the **Actuation** function, and they're meant for capturing the state and taking actions, respectively. Your actual usage and implementation of these functions - if at all since they are optional, and only 1 is necessary for custom control and data tracking - is up to you. The two main differences is that the **Observation** function is called *before* the **Actuation** function in the callback and what each should/can return when called. The **Obvservation** function can return 'reward(s)' to be automatically tracked. And the **Actuation** function must return an actuation dictionary, linking an actuator to its new setpoint value. Technically, for control purposes, you could do everything in just the **Actuation** function; but the **Observation** function grants extra flexibility to accessing the state and helpful automatic reward tracking. Also, since *each calling point* can have its own callback function, many seperate **Observation** and **Actuation** functions could be used across a single timestep, however, these usage is more advanced and may only be needed is special circumstances.
+- Each callback function (linked with a specific calling point) permits two custom functions to be attached. One is termed the **Observation** function and the other the **Actuation** function, and they're meant for capturing the state and taking actions, respectively. Your actual usage and implementation of these functions - if at all since they are optional, and only 1 is necessary for custom control and data tracking - is up to you. The two main differences is that the **Observation** function is called *before* the **Actuation** function in the callback and what each should/can return when called. The **Obvservation** function can return 'reward(s)' to be automatically tracked. And the **Actuation** function must return an actuation dictionary, linking an actuator to its new setpoint value. Technically, for control purposes, you could do everything in just the **Actuation** function; but the **Observation** function grants extra flexibility to accessing the state and helpful automatic reward tracking. Also, since *each calling point* can have its own callback function, many seperate **Observation** and **Actuation** functions could be used across a single timestep, however, these usage is more advanced and may only be needed is special circumstances.
  
  The Calling Point & Actuation Function dictionary should be built one key-value at a time using the method for each desired calling point callback:
 
@@ -136,75 +134,14 @@ Each callback function (linked with a specific calling point) permits two custom
    
 ***Note:*** *there are multiple calling points per timestep, each signifying the start/end of an event in the process. The majority of calling points occur consistently throughout the simulation, but several occur *once* before during simulation setup.* 
 
-The user-defined `actuation_function` should encapsulate any sort of control algorithm (more than one can be created and linked to unique calling points, but it's likely that only 1 will be used as the entire RL algorithm). Using the 'agent/environment' object attributes, or better, the methods `BcaEnv.get_ems_data` and `BcaEnv.get_weather_forecast`, to collect state information, a control algorithm/function can be created and passed. Using a decorator function, this actuation function will automatically be attached to a base callback function and linked to the defined calling point. At that calling point during runtime, the actuation function will be ran and the returned actuator dict will be passed to the simulation to update actuator setpoint values. 
-The rest of the arguments are also automatically passed to the base-callback function to dictate the update frequency of state data and actuation. This means that data collection or actuation updates do not need to happen every timestep. 
+The user-defined `actuation_function` should encapsulate any sort of control algorithm (more than one can be created and linked to unique calling points, but it's likely that only 1 will be used as the entire RL algorithm). Using the methods `BcaEnv.get_ems_data` and `BcaEnv.get_weather_forecast`, to collect state information, a control algorithm/function can be created and its actions returned. In `emspy` using a decorator function, this **Actuation** function will automatically be attached to the standard callback function and linked to the defined calling point. At that calling point during runtime, the actuation function will be ran and the returned actuator dict will be passed to the simulation to update actuator setpoint values. 
+The rest of the arguments are also automatically passed to the base-callback function to dictate the update frequency of observation and actuation. This means that data collection or actuation updates do not need to happen every timestep or in tandem with each other. 
 
-```python
-BcaEnv.get_ems_data(ems_metric_list: list, time_rev_index: list=[0]) -> list
-```
-- This method will return an ordered nested list of ordered data points for then given EMS metrics and timing index(s), or entire EMS type ToC
-- Its intended use is to return updated state information at each timestep, it can be called as many times as need in a actuation function. 
-- This method must be used during runtime from an actuation function 
-- `ems_metric_list` pass one or more EMS metrics (of any type) OR ONLY a single EMS type (var, intvar, meter, actuator, weather) in a list. Passing an EMS type will utilize and return data for that entire EMS ToC
-- `time_rev_index` indicates the time index of the data you want to return, indexing backwards from the most recent timestep at 0. Leaving this list empty [ ] will return the entire data list collected thus far in the simulation for each given EMS metric. *Note that data will only be returned once the number of simulation timesteps has surpassed the maximum prior-time index given* 
+### Please refer to the Wiki or `EmsPy` and `BcaEnv` documentation on how to utilize this API.
 
-```python
-BcaEnv.get_weather_forecast(when: str, weather_metrics: list, hour: int, zone_ts: int) -> list
-```
-- This method is used to fetch and return an ordered list of future weather data, resembling weather forecasts. Weather events that have already occurred in simulation can be gathered using `BcaEnv.get_ems_data`
-- This method must be used during runtime from an actuation function 
-- `weather_metrics` is the list of user-defined weather variable names, defined in the weather ToC, you want to fetch data for 
-- `when` either 'today' or 'tomorrow' dictates which day is in question, relative to current simulation time
-- `hour` the hour of the day to collect the weather forecast data
-- `zone_ts` the timestep within the given hour you want to collect weather forecast data for
-
- ***Note*** *: If you wish to use callback functions just for <ins>defualt data collection</ins> pass `None` as the actuation function. If you wish to use the callback functions for custom data collection and/or other actions other than any <ins>actuation/control</ins> at a specific calling point, implement an actuation function that returns `None` as the actuation dict.*
-
-Also, if there is a need to <ins>update</ins> specific EMS metrics at a certain calling point separately from the rest (all EMS ToCs), you can use the method below within an actuation function to update specific EMS metrics. However, this <ins>does not also exclude them</ins> from the `state_update` that updates ALL EMS metrics.
-
-```python
-BcaEnv.update_ems_data(ems_metric_list: list, return_data: bool) -> list
-```
-- This method will update the given EMS metrics, or entire EMS type ToC and optionally return an ordered list of the updated data 
-- Its intended use is if you want to update specific EMS data (or types) at a unique calling point, separate from the default state update of all EMS ToCs at another calling point.
-- This method must be used during runtime from an actuation function 
-- `ems_metric_list` pass one or more EMS metrics (of any type) OR ONLY a single EMS type (var, intvar, meter, actuator, weather) in a list. Passing an EMS type will utilize that entire EMS ToC
-- `return_data` if True, this will automatically return the ordered list of data from `Bca.Env.get_ems_data`   
-
- ***Warning*** *: EMS data (and actuation) can be 'updated' by the user (but not necessarily internally by the simulation) <ins>for each calling point</ins> (and actuation function) assigned within a single timestep. You likely want to avoid this and manually only implement one state update `state_update=True` per timestep. Otherwise, you will screw up zone timestep increments (with current software design) and may accidentally be collecting data and actuating multiple times per timestep.
-Just because you want to update data/actuation does not necessary mean it will be implmented at all or how you intended.
-An understanding of calling points and when to collect data or actuate is ***crucial*** - Please see the [EMS Application Guide](https://energyplus.net/documentation) for more information on calling points.*
-  
-           
-**TIPS**:
-- *(in progress)*
-
-**CAUTION**:
-- Make sure your hourly timestep matches that of your EnergyPlus .idf model
-- EMS data (and actuation) can be 'updated' by the user (but not necessarily internally by the simulation) <ins>for each calling point</ins> (and actuation function) assigned within a single timestep. You likely want to avoid this and manually only implement one state update `state_update=True` per timestep. Otherwise, you will screw up zone timestep increments (with current software design) and may accidentally be collecting data and actuating multiple times per timestep.
-Just because you want to update data/actuation does not necessary mean it will be implmented at all or how you intended.
-An understanding of calling points and when to collect data or actuate is ***crucial*** - Please see the [EMS Application Guide](https://energyplus.net/documentation) for more information on calling points.
-
-### Future Planned Functionality & Repo Improvements:
-- EmsPy improvements
-  - more automatic user oversight to verify that user's have not violated logical errors in calling points, callback functions, and/or EMS updates
-  - verify that given model timestep matches the .idf file, OR have it overwrite the model if not (say using openstudio somehow)
-  - assist users in understanding actuator input ranges
-  - further detailed documentation
-- Data Dashboard class to automatically compile E+ performance and RL learning data into subplots via Matplotlib
-- Openstudio wrapper class to assist in simple modifications of the .idf/.osm that impact simulation experiments (timesteps, start-end dates, etc.)
-- Provide tips to documentation on how to construct and/or modify building models to be linked with EmsPy 
-- A handful of various building models already set up with EmsPy so that user's can just focus on control algorithms given readily available state and action space, and pre-linked calling points. 
+Below, is a sample sub-script of EmsPy usage: controlling the thermostat setpoints of a single zone of a 5-Zone Office Building. 
 
 
-### Creating an E+ Building Energy Model:
-- TOOD
-
-### Setting up a E+ Model for EMS API Usage:
-- TODO
-
-### Linking EMS Metrics to Your EmsPy Script:
-- TODO
 
 ### References:
 - *(in progress)*
