@@ -30,8 +30,8 @@ class BcaEnv(EmsPy):
         self.ems_list_update_checked = False  # TODO get rid off, doesnt work with multiple method instances
 
     def set_calling_point_and_callback_function(self, calling_point: str,
-                                                observation_fxn,
-                                                actuation_fxn,
+                                                observation_function,
+                                                actuation_function,
                                                 update_state: bool,
                                                 update_observation_frequency: int = 1,
                                                 update_actuation_frequency: int = 1):
@@ -44,11 +44,11 @@ class BcaEnv(EmsPy):
         desired timestep frequencies of implementation.
 
         :param calling_point: the calling point at which the callback function will be called during simulation runtime
-        :param observation_fxn: the user defined observation function to be called at runtime calling point and desired
+        :param observation_function: the user defined observation function to be called at runtime calling point and desired
         timestep frequency, to be used to gather state data for agent before taking actions.
-        :param actuation_fxn: the user defined actuation function to be called at runtime calling point and desired
+        :param actuation_function: the user defined actuation function to be called at runtime calling point and desired
         timestep frequency, function must return dict of actuator names (key) and associated setpoint (value)
-        :param update_state: whether EMS and time/timestep should be updated.
+        :param update_state: whether EMS and time/timestep data should be updated from simulation for this calling point.
         :param update_observation_frequency: the number of zone timesteps per running the observation function
         :param update_actuation_frequency: the number of zone timesteps per updating the actuators from the actuation
         function
@@ -60,7 +60,7 @@ class BcaEnv(EmsPy):
             raise Exception(
                 f'ERROR: You have overwritten the calling point \'{calling_point}\'. Keep calling points unique.')
         else:
-            self.calling_point_callback_dict[calling_point] = [observation_fxn, actuation_fxn, update_state,
+            self.calling_point_callback_dict[calling_point] = [observation_function, actuation_function, update_state,
                                                                update_observation_frequency, update_actuation_frequency]
 
     def _check_ems_metric_input(self, ems_metric):

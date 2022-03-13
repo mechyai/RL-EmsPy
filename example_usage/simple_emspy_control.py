@@ -234,8 +234,8 @@ my_agent = Agent(sim, my_mdp)
 # Set your callback function (observation and/or actuation) function for a given calling point
 sim.set_calling_point_and_callback_function(
     calling_point=calling_point_for_callback_fxns,
-    observation_fxn=my_agent.observation_function,  # optional
-    actuation_fxn=my_agent.actuation_function,  # optional
+    observation_function=my_agent.observation_function,  # optional
+    actuation_function=my_agent.actuation_function,  # optional
     update_state=True,
     update_observation_frequency=1,
     update_actuation_frequency=1

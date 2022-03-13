@@ -1,6 +1,15 @@
 **This folder contains example scripts of **emspy** usage along with the building models (.IDF and .OSM) and weather files (.EPW) 
 necessary to run the EnergyPlus building simulation. Below will be a brief explanation of each example file.*
 
+## readme_example_simple_emspy_control.py
+
+This is a simple example to show how to set up and simulation and utilize some of emspy's features.
+This implements simple rule-based thermostat control based on the time of day, for a single zone of a 5-zone office
+building. Other data is tracked and reported just for example.
+
+This is a simplified/cleaned version (no MdpManager, less comments, etc.) of the 'simple_emspy_control.py' example,
+meant for the README.md.
+
 ## simple_emspy_control.py
 
 This is a simple example to show how to set up and simulation and utilize some of **emspy**'s features.
