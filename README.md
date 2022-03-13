@@ -78,7 +78,7 @@ See the *9.5 EMS Application Guide* and *9.5 Input Output Reference* documents f
 This guide provides a *very brief* overview of how to use EmsPy. Please see the Wiki, code documentation, and example scripts for more detailed information. The integration of the control (RL) algorithm and the flow of the calling points and callback functions at runtime is depicted in the image above. The image below loosely
 represents the logic of the **EmsPy** API.
 
-<img src="https://user-images.githubusercontent.com/65429130/158071343-5cd70df3-456b-4e97-840a-94bb1800a1bf.PNG" width = "750">
+<img src="https://user-images.githubusercontent.com/65429130/158071407-116125be-18e4-4e94-bbfe-a8e1860aa86e.PNG" width = "750">
 
 **1.** First, you will create an **BcaEnv object** (Building Control Agent + Environment) from proper inputs.
 `BcaEnv` is a simplified UI that wraps `EmsPy` that should provide all necessary functionallity. Using `EmsPy`, this object encapsulates your building simulation environment and helps manage all your specificed EMS data produced and recorded during runtime. 
