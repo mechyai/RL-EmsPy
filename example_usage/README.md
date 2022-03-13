@@ -12,5 +12,6 @@ of the `MdpManager` to handle all of the simulation data and EMS variables.
 
 5 Zone Office Building Model
 <img src="https://user-images.githubusercontent.com/65429130/158045813-914259d1-a0ba-45a5-b81d-35520e685b23.PNG" width = "750">
+
 Sample Results for the Month of April
 <img src="https://user-images.githubusercontent.com/65429130/158045876-da914d81-f705-43c6-9815-5c5c5cff9778.PNG" width = "750">
