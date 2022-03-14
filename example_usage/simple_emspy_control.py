@@ -170,27 +170,50 @@ class Agent:
 
     def observation_function(self):
         # -- FETCH/UPDATE SIMULATION DATA --
+        # Get data from simulation at current timestep (and calling point)
         self.time = self.bca.get_ems_data(['t_datetimes'])
 
-        # Get data from simulation at current timestep (and calling point)
         var_data = self.bca.get_ems_data(self.var_names)
-        meter_data = self.bca.get_ems_data(self.meter_names)
-        weather_data = self.bca.get_ems_data(self.weather_names)
+        meter_data = self.bca.get_ems_data(self.meter_names, return_dict=True)
+        weather_data = self.bca.get_ems_data(self.weather_names, return_dict=True)  # just for example, other usage
 
-        # update our MdpManager and all MdpElements, automatically calling any encoding/normalization functions
-        vars = self.mdp.update_ems_value(self.vars, var_data)
-        meters = self.mdp.update_ems_value(self.meters, meter_data)
-        weather = self.mdp.update_ems_value(self.weather, weather_data)
+        # Update our MdpManager and all MdpElements, returns same values
+        # Automatically runs any encoding functions to update encoded values
+        vars = self.mdp.update_ems_value(self.vars, var_data)  # outputs dict based on ordered list of names & values
+        meters = self.mdp.update_ems_value_from_dict(meter_data)  # other usage, outputs same dict w/ dif input
+        weather = self.mdp.update_ems_value_from_dict(weather_data)   # other usage, outputs same dict w/ dif input
 
-        # get specific values from MdpManager based on name
-        self.zn0_temp = self.mdp.get_mdp_element_from_name('zn0_temp').value
+        """
+        Below, we show various redundant ways of looking at EMS values and encoded values. A variety of approaches are 
+        provided for a variety of use-cases. Please inspect the usage and code to see what best suites your needs. 
+        Note: not all usage examples are presented below.
+        """
+        # Get specific values from MdpManager based on name
+        self.zn0_temp = self.mdp.get_mdp_element('zn0_temp').value
+        # OR get directly from BcaEnv
+        self.zn0_temp = self.bca.get_ems_data(['zn0_temp'])
+        # OR directly from output
+        self.zn0_temp = var_data[1]  # from BcaEnv list output
+        self.zn0_temp = vars['zn0_temp']  # from MdpManager list output
+        # outdoor air dry bulb temp
+        outdoor_temp = weather_data['oa_db']  # from BcaEnv dict output
+        outdoor_temp = weather['oa_db']  # from MdpManager dict output
+
+        # use encoding function values to see temperature in Fahrenheit
+        zn0_temp_f = self.mdp.ems_master_list['zn0_temp'].encoded_value  # access the Master list dictionary directly
+        outdoor_temp_f = self.mdp.get_mdp_element('oa_db').encoded_value  # using helper function
+        # OR call encoding function on multiple elements, even though encoded values are automatically up to date
+        encoded_values_dict = self.mdp.get_ems_encoded_values(['oa_db', 'zn0_temp'])
+        zn0_temp_f = encoded_values_dict['zn0_temp']
+        outdoor_temp_f = encoded_values_dict['oa_db']
 
         # print reporting
-        if self.time.hour % self.print_every_x_hours == 0 and self.time.minute == 0:
+        if self.time.hour % 2 == 0 and self.time.minute == 0:  # report every 2 hours
             print(f'\n\nTime: {str(self.time)}')
             print('\n\t* Observation Function:')
-            print(f'\t\tVars: {vars}\n\t\tMeters: {meters}\n\t\tWeather:{weather}')
-            print(f'\t\tZone0 Temp: {round(self.zn0_temp,2)} C')
+            print(f'\t\tVars: {var_data}\n\t\tMeters: {meter_data}\n\t\tWeather:{weather_data}')
+            print(f'\t\tZone0 Temp: {round(self.zn0_temp,2)} C, {round(zn0_temp_f,2)} F')
+            print(f'\t\tOutdoor Temp: {round(outdoor_temp, 2)} C, {round(outdoor_temp_f,2)} F')
 
     def actuation_function(self):
         work_hours_heating_setpoint = 18  # deg C

@@ -9,3 +9,6 @@
 *.pyc
 
 */out
+
+/docs
+/simple_office_5zone_building_model

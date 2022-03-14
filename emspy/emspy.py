@@ -289,8 +289,8 @@ class EmsPy:
                                                    ems_obj_details[2])  # actuator key
             # catch error handling by EMS E+
             if handle == -1:
-                raise Exception(f'ERROR: [{str(ems_obj_details)}]: The EMS sensor/actuator handle could not be'
-                                ' found. Please consult the .idf and/or your ToC for accuracy')
+                raise Exception(f'ERROR: [{str(ems_obj_details)}]: The EMS sensor/actuator handle could not be '
+                                'found. Please consult the .idf and/or your ToC for accuracy')
             else:
                 return handle
         except IndexError:
