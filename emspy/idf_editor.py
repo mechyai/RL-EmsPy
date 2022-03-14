@@ -79,7 +79,7 @@ def insert_custom_data_tracking(custom_name: str, idf_file_path: str, unit_type:
 
     output_var_obj = ['Output:Variable,',
                       custom_name,
-                      '\tSchedule Value',
+                      '\tSchedule Value,',
                       '\tTimestep;']
 
     # create, write, then delete temporary file, used for appending
