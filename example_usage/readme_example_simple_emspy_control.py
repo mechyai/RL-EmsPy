@@ -78,6 +78,7 @@ sim = BcaEnv(
     tc_weather=tc_weather
 )
 
+
 class Agent:
     """
     Create agent instance, which is used to create actuation() and observation() functions (both optional) and maintain
@@ -99,20 +100,23 @@ class Agent:
 
         # Get data from simulation at current timestep (and calling point) using ToC names
         var_data = self.bca.get_ems_data(list(self.bca.tc_var.keys()))
-        meter_data = self.bca.get_ems_data(list(self.bca.tc_meter.keys()))
-        weather_data = self.bca.get_ems_data(list(self.bca.tc_weather.keys()))
+        meter_data = self.bca.get_ems_data(list(self.bca.tc_meter.keys()), return_dict=True)
+        weather_data = self.bca.get_ems_data(list(self.bca.tc_weather.keys()), return_dict=True)
 
         # get specific values from MdpManager based on name
         self.zn0_temp = var_data[1]  # index 1st element to get zone temps, based on EMS Variable ToC
-        # OR
-        self.zn0_temp = self.bca.get_ems_data(['zn0_temp'])
+        # OR if using "return_dict=True"
+        outdoor_temp = weather_data['oa_db']  # outdoor air dry bulb temp
 
         # print reporting
         if self.time.hour % 2 == 0 and self.time.minute == 0:  # report every 2 hours
             print(f'\n\nTime: {str(self.time)}')
             print('\n\t* Observation Function:')
-            print(f'\t\tVars: {var_data}\n\t\tMeters: {meter_data}\n\t\tWeather:{weather_data}')
+            print(f'\t\tVars: {var_data}'  # outputs ordered list
+                  f'\n\t\tMeters: {meter_data}'  # outputs dictionary
+                  f'\n\t\tWeather:{weather_data}')  # outputs dictionary
             print(f'\t\tZone0 Temp: {round(self.zn0_temp,2)} C')
+            print(f'\t\tOutdoor Temp: {round(outdoor_temp, 2)} C')
 
     def actuation_function(self):
         work_hours_heating_setpoint = 18  # deg C
