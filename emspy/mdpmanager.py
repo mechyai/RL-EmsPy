@@ -273,6 +273,8 @@ class MdpManager:
         information has been provided to the encoding arguments. Other elements without None value are NOT expected
         to change between the usage of this function.
 
+        If no encoding function is present, just the normal value is returned.
+
         :param ems_objects_or_names: List of EMS name(s) or the associated MdpElements that are tracked
         :return: Dict of encoded values. If NO encoding function available, returns just value.
         """
@@ -286,6 +288,9 @@ class MdpManager:
             if encoded_value is None and ems_obj.encoding_fxn is not None:
                 # rerun in case of encoding fxn argument changes
                 encoded_value = self.run_encoding_fxn(ems_obj, ems_obj.value)
+            else:
+                # no encoding value, return normal value
+                encoded_value = ems_obj.value
 
             encoded_values_dict[ems_obj.name] = encoded_value
 
