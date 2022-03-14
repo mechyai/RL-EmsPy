@@ -80,13 +80,14 @@ def insert_custom_data_tracking(custom_name: str, idf_file_path: str, unit_type:
     output_var_obj = ['Output:Variable,',
                       custom_name,
                       '\tSchedule Value,',
-                      '\tTimestep;']
+                      '\tTimestep;',
+                      '! ----------------------------------------------------------------------']
 
     # create, write, then delete temporary file, used for appending
     temp_file = '_temp_write'
     with open(temp_file, 'w') as idf:
         idf.writelines('\n')
-        idf.writelines('!- Custom Schedule Tracking (next 3 objects)')
+        idf.writelines(f'!----------- Custom Schedule Tracking ({custom_name[:-1]}) -----------')
         idf.writelines('\n')
         idf.writelines('\n'.join(schedule_type_limit_obj))
         idf.writelines('\n\n')
