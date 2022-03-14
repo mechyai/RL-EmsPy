@@ -156,10 +156,10 @@ class Agent:
         self.actuators = mdp.ems_type_dict['actuator']  # all MdpElements of EMS type actuator
 
         # get just the names of EMS variables to use with other functions
-        self.var_names = mdp.get_ems_names_from_mdp_elements(self.vars)
-        self.meter_names = mdp.get_ems_names_from_mdp_elements(self.meters)
-        self.weather_names = mdp.get_ems_names_from_mdp_elements(self.weather)
-        self.actuator_names = mdp.get_ems_names_from_mdp_elements(self.actuators)
+        self.var_names = mdp.get_ems_names(self.vars)
+        self.meter_names = mdp.get_ems_names(self.meters)
+        self.weather_names = mdp.get_ems_names(self.weather)
+        self.actuator_names = mdp.get_ems_names(self.actuators)
 
         # simulation data state
         self.zn0_temp = None  # deg C
@@ -170,9 +170,9 @@ class Agent:
 
     def observation_function(self):
         # -- FETCH/UPDATE SIMULATION DATA --
+        # Get data from simulation at current timestep (and calling point)
         self.time = self.bca.get_ems_data(['t_datetimes'])
 
-        # Get data from simulation at current timestep (and calling point)
         var_data = self.bca.get_ems_data(self.var_names)
         meter_data = self.bca.get_ems_data(self.meter_names, return_dict=True)
         weather_data = self.bca.get_ems_data(self.weather_names, return_dict=True)  # just for example, other usage
@@ -189,7 +189,7 @@ class Agent:
         Note: not all usage examples are presented below.
         """
         # Get specific values from MdpManager based on name
-        self.zn0_temp = self.mdp.get_mdp_element_from_ems_name('zn0_temp').value
+        self.zn0_temp = self.mdp.get_mdp_element('zn0_temp').value
         # OR get directly from BcaEnv
         self.zn0_temp = self.bca.get_ems_data(['zn0_temp'])
         # OR directly from output
@@ -201,7 +201,7 @@ class Agent:
 
         # use encoding function values to see temperature in Fahrenheit
         zn0_temp_f = self.mdp.ems_master_list['zn0_temp'].encoded_value  # access the Master list dictionary directly
-        outdoor_temp_f = self.mdp.get_mdp_element_from_ems_name('oa_db').encoded_value  # using helper function
+        outdoor_temp_f = self.mdp.get_mdp_element('oa_db').encoded_value  # using helper function
         # OR call encoding function on multiple elements, even though encoded values are automatically up to date
         encoded_values_dict = self.mdp.get_ems_encoded_values(['oa_db', 'zn0_temp'])
         zn0_temp_f = encoded_values_dict['zn0_temp']

@@ -212,8 +212,8 @@ class MdpManager:
         for i, ems_name in enumerate(ems_objects_or_names):
             # update current value
             value = ems_values[i]
-            ems_obj = self.get_mdp_element_from_ems_name(ems_name)
-            ems_name = self.get_ems_names_from_mdp_elements([ems_obj])[0]
+            ems_obj = self.get_mdp_element(ems_name)
+            ems_name = self.get_ems_names([ems_obj])[0]
             ems_obj.value = value  # update MdpElement
             values_dict[ems_name] = value  # update dict
 
@@ -237,8 +237,8 @@ class MdpManager:
 
         values_dict = {}
         for ems_name, value in bca_data_dict.items():
-            ems_obj = self.get_mdp_element_from_ems_name(ems_name)
-            ems_name = self.get_ems_names_from_mdp_elements([ems_obj])[0]
+            ems_obj = self.get_mdp_element(ems_name)
+            ems_name = self.get_ems_names([ems_obj])[0]
             ems_obj.value = value  # update MdpElement
             values_dict[ems_name] = value  # update dict
 
@@ -260,7 +260,7 @@ class MdpManager:
         values_dict = {}
         for ems_obj in ems_objects_or_names:
             # manage name or MdpElement input
-            ems_obj = self.get_mdp_element_from_ems_name(ems_obj)
+            ems_obj = self.get_mdp_element(ems_obj)
             values_dict[ems_obj.name] = ems_obj.value
 
         return values_dict
@@ -280,7 +280,7 @@ class MdpManager:
         encoded_values_dict = {}
         for ems_obj in ems_objects_or_names:
             # manage name or MdpElement input
-            ems_obj = self.get_mdp_element_from_ems_name(ems_obj)
+            ems_obj = self.get_mdp_element(ems_obj)
             encoded_value = ems_obj.encoded_value
 
             if encoded_value is None and ems_obj.encoding_fxn is not None:
@@ -291,7 +291,7 @@ class MdpManager:
 
         return encoded_values_dict
 
-    def get_ems_names_from_mdp_elements(self, ems_objects: list = None) -> list:
+    def get_ems_names(self, ems_objects: list = None) -> list:
         """
         From list of MdpElement objects, their names are returned in order. Will throw error if cannot find.
 
@@ -316,7 +316,7 @@ class MdpManager:
 
         return names_list
 
-    def get_mdp_element_from_ems_name(self, ems_name: str) -> MdpElement:
+    def get_mdp_element(self, ems_name: str) -> MdpElement:
         """
         Looks up and returns EMS object instance (MdpElement) from its name. Will throw error if cannot find.
 
