@@ -145,9 +145,9 @@ This is a simple example to show how to set up and simulation and utilize some o
 This implements simple rule-based thermostat control based on the time of day, for a single zone of a 5-zone office
 building. Other data is tracked and reported just for example.
 
-This is a simplified/cleaned version (no MdpManager, less comments, etc.) of the 'simple_emspy_control.py' example
+This is a simplified/cleaned version (no MdpManager, less comments, etc.) of the 'simple_emspy_control.py' example,
+meant for the README.md.
 """
-
 import datetime
 import matplotlib.pyplot as plt
 
@@ -162,6 +162,8 @@ idf_file_name = r'BEM_simple/simple_office_5zone_April.idf'  # building energy m
 # Weather Path
 ep_weather_path = r'BEM_simple/5B_USA_CO_BOULDER_TMY2.epw'  # EPW weather file
 
+# Output .csv Path (optional)
+cvs_output_path = r'dataframes_output_test.csv'
 
 # STATE SPACE (& Auxiliary Simulation Data)
 
@@ -315,7 +317,7 @@ sim.run_env(ep_weather_path)
 sim.reset_state()  # reset when done
 
 # -- Sample Output Data --
-output_dfs = sim.get_df()  # LOOK at all the data collected here, custom DFs can be made too
+output_dfs = sim.get_df(to_csv_file=cvs_output_path)  # LOOK at all the data collected here, custom DFs can be made too
 
 # -- Plot Results --
 fig, ax = plt.subplots()
@@ -327,8 +329,6 @@ output_dfs['actuator'].plot(y='zn0_cooling_sp', use_index=True, ax=ax)
 plt.title('Zn0 Temps and Thermostat Setpoint for Year')
 
 # Analyze results in "out" folder, DView, or directly from your Python variables and Pandas Dataframes
-
-
 ```
 <ins>5 Zone Office Building Model</ins>
 

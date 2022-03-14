@@ -20,6 +20,8 @@ idf_file_name = r'BEM_simple/simple_office_5zone_April.idf'  # building energy m
 # Weather Path
 ep_weather_path = r'BEM_simple/5B_USA_CO_BOULDER_TMY2.epw'  # EPW weather file
 
+# Output .csv Path (optional)
+cvs_output_path = r'dataframes_output_test.csv'
 
 # STATE SPACE (& Auxiliary Simulation Data)
 
@@ -173,7 +175,7 @@ sim.run_env(ep_weather_path)
 sim.reset_state()  # reset when done
 
 # -- Sample Output Data --
-output_dfs = sim.get_df()  # LOOK at all the data collected here, custom DFs can be made too
+output_dfs = sim.get_df(to_csv_file=cvs_output_path)  # LOOK at all the data collected here, custom DFs can be made too
 
 # -- Plot Results --
 fig, ax = plt.subplots()
