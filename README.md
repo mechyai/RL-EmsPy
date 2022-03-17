@@ -139,7 +139,7 @@ The rest of the arguments are also automatically passed to the base-callback fun
 ### Please refer to the Wiki or `EmsPy` and `BcaEnv` code documentation on how to utilize this API.
 
 Below, is a sample sub-script of EmsPy usage: controlling the thermostat setpoints of a single zone of a 5-Zone Office Building based on the time of day. 
-```
+```python
 """
 This is a simple example to show how to set up and simulation and utilize some of emspy's features.
 This implements simple rule-based thermostat control based on the time of day, for a single zone of a 5-zone office
