@@ -19,31 +19,46 @@ import numpy as np
 class EmsPy:
     """A meta-class wrapper to the EnergyPlus Python API to simplify/constrain usage for RL-algorithm purposes."""
 
-    available_weather_metrics = ['sun_is_up', 'is_raining', 'is_snowing', 'albedo', 'beam_solar', 'diffuse_solar',
-                                 'horizontal_ir', 'liquid_precipitation', 'outdoor_barometric_pressure',
-                                 'outdoor_dew_point', 'outdoor_dry_bulb', 'outdoor_relative_humidity',
-                                 'sky_temperature', 'wind_direction', 'wind_speed']
+    available_weather_metrics = [
+        'sun_is_up', 'is_raining', 'is_snowing', 'albedo', 'beam_solar', 'diffuse_solar',
+        'horizontal_ir', 'liquid_precipitation', 'outdoor_barometric_pressure',
+        'outdoor_dew_point', 'outdoor_dry_bulb', 'outdoor_relative_humidity',
+        'sky_temperature', 'wind_direction', 'wind_speed'
+    ]
 
-    available_timing_metrics = ['t_actual_date_times', 't_actual_times', 't_current_times', 't_years', 't_months',
-                                't_days', 't_hours', 't_minutes', 't_datetimes', 'timesteps_zone',
-                                'timesteps_zone_num', 'callbacks']
+    available_timing_metrics = [
+        't_actual_date_times', 't_actual_times', 't_current_times', 't_years', 't_months',
+        't_days', 't_hours', 't_minutes', 't_datetimes', 'timesteps_zone',
+        'timesteps_zone_num', 'callbacks']
 
-    available_calling_points = ['callback_after_component_get_input',
-                                'callback_end_zone_sizing',
-                                'callback_end_system_sizing',
-                                'callback_begin_new_environment',
-                                'callback_after_new_environment_warmup_complete',
-                                'callback_begin_zone_timestep_before_init_heat_balance',
-                                'callback_begin_zone_timestep_after_init_heat_balance',
-                                'callback_after_predictor_before_hvac_managers',
-                                'callback_after_predictor_after_hvac_managers',
-                                'callback_begin_system_timestep_before_predictor',
-                                'callback_begin_zone_timestep_before_set_current_weather',
-                                'callback_end_system_timestep_after_hvac_reporting',
-                                'callback_end_system_timestep_before_hvac_reporting',
-                                'callback_end_zone_timestep_after_zone_reporting',
-                                'callback_end_zone_timestep_before_zone_reporting',
-                                'callback_inside_system_iteration_loop']
+    available_calling_points = [
+        # Sim Star
+        'callback_after_component_get_input',                       # 0,   1.a)   @ env period, once, only autosize control
+        'callback_end_zone_sizing',                                 # 1,   1.b)   @ env period, once
+        'callback_end_system_sizing',                               # 2,   1.c)   @ env period, once
+        'callback_unitary_system_sizing',                           # 3,   1.c.1) @ env period,
+        'callback_begin_new_environment',                           # 4,   2)     @ start env, 1
+        'callback_after_new_environment_warmup_complete',           # 5,   3.a)   @ evn post warmup, 1
+        # Beginning of Zone Timeste
+        'callback_begin_zone_timestep_before_set_current_weather',  # 6,   3.b)   @ zone ts start
+        'callback_begin_zone_timestep_before_init_heat_balance',    # 7,   3.c)   @ zone ts
+        'callback_begin_zone_timestep_after_init_heat_balance',     # 8,   3.d)   @ zone ts
+        # Zone Load "Predictor" / "Correcto
+        'callback_begin_system_timestep_before_predictor',          # 9*,  ?.?)   # TODO zone or sys ts, discrepancy in API and EMS documentation (TEST)
+        'callback_after_predictor_before_hvac_managers',            # 10*, 4.a)  @ zone ts, predictor EMS overwrite by managers
+        'callback_after_predictor_after_hvac_managers',             # 11*, 4.b)  @ zone ts, EMS overwrite managers
+        # HVAC Iteration Loop (System Timestep)
+        'callback_inside_system_iteration_loop',                    # 12,  5.a) @ sys start, HVAC loop
+        'callback_end_system_timestep_before_hvac_reporting',       # 13,  5.b) @ sys ts, HVAC loop
+        'callback_end_system_timestep_after_hvac_reporting',        # 14,  5.c) @ sys ts, HVAC loop
+        # End of Zone Timestep
+        'callback_end_zone_timestep_before_zone_reporting',         # 15,  6.a) @ zone ts final
+        'callback_end_zone_timestep_after_zone_reporting',          # 16,  6.b) @ zone ts end
+        # Misc.
+        '_callback_register_external_hvac_manager',                 # 17,  (placeholder, not well supported as of 9.5)
+        'callback_message',                                         # 18,  @ stdout, misc.
+        'callback_progress'                                         # 19,  @ end of day, misc.
+    ]
 
     def __init__(self, ep_path: str, ep_idf_to_run: str, timesteps: int,
                  tc_var: dict, tc_intvar: dict, tc_meter: dict, tc_actuator: dict, tc_weather: dict):
