@@ -33,31 +33,32 @@ class EmsPy:
 
     available_calling_points = [
         # Sim Star
-        'callback_after_component_get_input',                       # 0,   1.a)   @ env period, once, only autosize control
-        'callback_end_zone_sizing',                                 # 1,   1.b)   @ env period, once
-        'callback_end_system_sizing',                               # 2,   1.c)   @ env period, once
-        'callback_unitary_system_sizing',                           # 3,   1.c.1) @ env period,
-        'callback_begin_new_environment',                           # 4,   2)     @ start env, 1
-        'callback_after_new_environment_warmup_complete',           # 5,   3.a)   @ evn post warmup, 1
+        'callback_after_component_get_input',  # 0,   1.a)   @ env period, once, only autosize control
+        'callback_end_zone_sizing',  # 1,   1.b)   @ env period, once
+        'callback_end_system_sizing',  # 2,   1.c)   @ env period, once
+        'callback_unitary_system_sizing',  # 3,   1.c.1) @ env period,
+        'callback_begin_new_environment',  # 4,   2)     @ start env, 1
+        'callback_after_new_environment_warmup_complete',  # 5,   3.a)   @ evn post warmup, 1
         # Beginning of Zone Timestep
         'callback_begin_zone_timestep_before_set_current_weather',  # 6,   3.b)   @ zone ts start
-        'callback_begin_zone_timestep_before_init_heat_balance',    # 7,   3.c)   @ zone ts
-        'callback_begin_zone_timestep_after_init_heat_balance',     # 8,   3.d)   @ zone ts
+        'callback_begin_zone_timestep_before_init_heat_balance',  # 7,   3.c)   @ zone ts
+        'callback_begin_zone_timestep_after_init_heat_balance',  # 8,   3.d)   @ zone ts
         # Zone Load "Predictor" / "Corrector
-        'callback_begin_system_timestep_before_predictor',          # 9*,  ?.?)   # TODO zone or sys ts, discrepancy in API and EMS documentation (TEST)
-        'callback_after_predictor_before_hvac_managers',            # 10, 4.a)  @ zone ts, predictor EMS overwrite by managers
-        'callback_after_predictor_after_hvac_managers',             # 11, 4.b)  @ zone ts, EMS overwrite managers
+        'callback_begin_system_timestep_before_predictor',
+        # 9*,  ?.?)   # TODO zone or sys ts, discrepancy in API and EMS documentation (TEST)
+        'callback_after_predictor_before_hvac_managers',  # 10, 4.a)  @ zone ts, predictor EMS overwrite by managers
+        'callback_after_predictor_after_hvac_managers',  # 11, 4.b)  @ zone ts, EMS overwrite managers
         # HVAC Iteration Loop (System Timestep)
-        'callback_inside_system_iteration_loop',                    # 12,  5.a) @ sys start, HVAC loop
-        'callback_end_system_timestep_before_hvac_reporting',       # 13,  5.b) @ sys ts, HVAC loop
-        'callback_end_system_timestep_after_hvac_reporting',        # 14,  5.c) @ sys ts, HVAC loop
+        'callback_inside_system_iteration_loop',  # 12,  5.a) @ sys start, HVAC loop
+        'callback_end_system_timestep_before_hvac_reporting',  # 13,  5.b) @ sys ts, HVAC loop
+        'callback_end_system_timestep_after_hvac_reporting',  # 14,  5.c) @ sys ts, HVAC loop
         # End of Zone Timestep
-        'callback_end_zone_timestep_before_zone_reporting',         # 15,  6.a) @ zone ts final
-        'callback_end_zone_timestep_after_zone_reporting',          # 16,  6.b) @ zone ts end
+        'callback_end_zone_timestep_before_zone_reporting',  # 15,  6.a) @ zone ts final
+        'callback_end_zone_timestep_after_zone_reporting',  # 16,  6.b) @ zone ts end
         # Misc.
-        '_callback_register_external_hvac_manager',                 # 17,  (placeholder, not well supported as of 9.5)
-        'callback_message',                                         # 18,  @ stdout, misc.
-        'callback_progress'                                         # 19,  @ end of day, misc.
+        '_callback_register_external_hvac_manager',  # 17,  (placeholder, not well supported as of 9.5)
+        'callback_message',  # 18,  @ stdout, misc.
+        'callback_progress'  # 19,  @ end of day, misc.
     ]
 
     def __init__(self, ep_path: str, ep_idf_to_run: str, timesteps: int,
@@ -358,7 +359,8 @@ class EmsPy:
 
         # timesteps total
         if len(self.t_datetimes) < 2 or \
-                self.t_datetimes[-1] != self.t_datetimes[-2] or self.timesteps_zone_num[-1] != self.timesteps_zone_num[-2]:
+                self.t_datetimes[-1] != self.t_datetimes[-2] or self.timesteps_zone_num[-1] != self.timesteps_zone_num[
+            -2]:
             # verify new timestep if current & previous timestep num and datetime are different
             self.timestep_total_count += 1
 
@@ -419,7 +421,7 @@ class EmsPy:
         self.rewards.append(rewards)
         self.reward_current = rewards
 
-    def _get_weather(self, weather_metrics: list, when: str,  hour: int, zone_ts: int) -> list:
+    def _get_weather(self, weather_metrics: list, when: str, hour: int, zone_ts: int) -> list:
         """
         Gets desired weather metric data for a given hour and zone timestep, either for today or tomorrow in simulation.
 
@@ -455,8 +457,8 @@ class EmsPy:
             weather_metric = self.tc_weather[weather_name]
             # sun weather type is unique to rest, doesn't follow consistent naming system
             if weather_metric != 'sun_is_up':
-                weather_data.append(getattr(self.api.exchange, when + '_weather_' + weather_metric + '_at_time')\
-                                    (self.state, hour, zone_ts))
+                weather_data.append(getattr(self.api.exchange, when + '_weather_' + weather_metric + '_at_time') \
+                                        (self.state, hour, zone_ts))
             elif weather_metric == 'sun_is_up':
                 weather_data.append(self.api.exchange.sun_is_up(self.state))
 
@@ -624,8 +626,9 @@ class EmsPy:
                                 f'emspy.available_calling_points class attribute.')
             else:
                 # unpack observation & actuation fxns and callback fxn arguments
-                observation_fxn, actuation_fxn, update_state, update_state_freq, update_act_freq = \
-                    self.calling_point_callback_dict[calling_key]
+                observation_fxn, actuation_fxn, update_state, update_observation_freq, update_act_freq, \
+                observation_fxn_kwargs, actuation_fxn_kwargs = self.calling_point_callback_dict[calling_key]
+
                 # verify only one EMS update per timestep is advised
                 if update_state:
                     update_cp_list.append(calling_key)
@@ -639,8 +642,10 @@ class EmsPy:
                                                                                             observation_fxn,
                                                                                             actuation_fxn,
                                                                                             update_state,
-                                                                                            update_state_freq,
-                                                                                            update_act_freq))
+                                                                                            update_observation_freq,
+                                                                                            update_act_freq,
+                                                                                            observation_fxn_kwargs,
+                                                                                            actuation_fxn_kwargs))
 
                 # report message summary to user
                 actuation_msg = 'Yes' if actuation_fxn is not None else 'No'
@@ -650,7 +655,7 @@ class EmsPy:
                       f'\n\t\t\t- Observation: [{observation_msg}]'
                       f'\n\t\t\t- Actuation: [{actuation_msg}]'
                       f'\n\t\t\t- State Update: [{update_state}]'
-                      f'\n\t\t\t- State Update Freq: [{update_state_freq}]'
+                      f'\n\t\t\t- State Update Freq: [{update_observation_freq}]'
                       f'\n\t\t\t- Action Update Freq: [{update_act_freq}]')
 
     def _create_default_dataframes(self):
@@ -859,7 +864,8 @@ class EmsPy:
 
         # RUN SIMULATION
         print('\n* * * Running E+ Simulation * * *\n')
-        self.simulation_success = self.api.runtime.run_energyplus(self.state, ['-w', weather_file, '-d', 'out', self.idf_file])   # cmd line args
+        self.simulation_success = self.api.runtime.run_energyplus(self.state, ['-w', weather_file, '-d', 'out',
+                                                                               self.idf_file])  # cmd line args
         if self.simulation_success != 0:
             print('\n* * * Simulation FAILED * * *\n')
         # simulation successful
