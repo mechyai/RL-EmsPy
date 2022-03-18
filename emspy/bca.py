@@ -34,7 +34,10 @@ class BcaEnv(EmsPy):
                                                 actuation_function,
                                                 update_state: bool,
                                                 update_observation_frequency: int = 1,
-                                                update_actuation_frequency: int = 1):
+                                                update_actuation_frequency: int = 1,
+                                                observation_function_kwargs: dict = None,
+                                                actuation_function_kwargs: dict = None
+                                                ):
         """
         Sets connection for runtime calling points and custom callback function specification with defined arguments.
 
@@ -52,6 +55,10 @@ class BcaEnv(EmsPy):
         :param update_observation_frequency: the number of zone timesteps per running the observation function
         :param update_actuation_frequency: the number of zone timesteps per updating the actuators from the actuation
         function
+        :param observation_function_kwargs: a dictionary to be fixed input to your observation function as **kwargs.
+        **kwargs must be in your passed observation function to use, otherwise leave as None
+        :param actuation_function_kwargs: a dictionary to be fixed input to your actuation function as **kwargs.
+        **kwargs must be in your passed actuation function to use, otherwise leave as None
         """
 
         if update_actuation_frequency > update_observation_frequency:
@@ -61,7 +68,8 @@ class BcaEnv(EmsPy):
                 f'ERROR: You have overwritten the calling point \'{calling_point}\'. Keep calling points unique.')
         else:
             self.calling_point_callback_dict[calling_point] = [observation_function, actuation_function, update_state,
-                                                               update_observation_frequency, update_actuation_frequency]
+                                                               update_observation_frequency, update_actuation_frequency,
+                                                               observation_function_kwargs, actuation_function_kwargs]
 
     def _check_ems_metric_input(self, ems_metric):
         """Verifies user-input of EMS metric/type list is valid."""

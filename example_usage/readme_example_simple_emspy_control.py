@@ -65,7 +65,7 @@ tc_actuators = {
 }
 
 # -- Simulation Params --
-calling_point_for_callback_fxn = EmsPy.available_calling_points[6]  # 5-15 valid for timestep loop during simulation
+calling_point_for_callback_fxn = EmsPy.available_calling_points[9]  # 6-16 valid for timestep loop during simulation
 sim_timesteps = 6  # every 60 / sim_timestep minutes (e.g 10 minutes per timestep)
 
 # -- Create Building Energy Simulation Instance --
