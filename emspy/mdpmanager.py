@@ -290,7 +290,7 @@ class MdpManager:
                 encoded_value = self.run_encoding_fxn(ems_obj, ems_obj.value)
             else:
                 # no encoding value, return normal value
-                encoded_value = ems_obj.value
+                encoded_value = ems_obj.encoded_value
 
             encoded_values_dict[ems_obj.name] = encoded_value
 
