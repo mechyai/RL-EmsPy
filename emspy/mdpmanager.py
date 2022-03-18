@@ -288,9 +288,12 @@ class MdpManager:
             if encoded_value is None and ems_obj.encoding_fxn is not None:
                 # rerun in case of encoding fxn argument changes
                 encoded_value = self.run_encoding_fxn(ems_obj, ems_obj.value)
+            elif ems_obj.encoded_fxn is not None:
+                # return encoded value that was attained when first getting value
+                encoded_value = self.ems_obj.encoded_value
             else:
                 # no encoding value, return normal value
-                encoded_value = ems_obj.encoded_value
+                encoded_value = ems_obj.value
 
             encoded_values_dict[ems_obj.name] = encoded_value
 
