@@ -1,4 +1,4 @@
- # RL - EmsPy (work In Progress...)
+ # RL - EmsPy (work in progress...)
 ### The EmsPy Python package was made to facilitate Reinforcement Learning (RL) algorithm research for developing and testing Building Control Agents (BCAs) for intelligent building and HVAC automation using EnergyPlus's (E+) building energy simulator and wrapping their Energy Management System (EMS) Python API. 
 
 *This repo was constructed by someone with little experience with EnergyPlus and software/programming, but wanted to 
