@@ -39,14 +39,14 @@ class EmsPy:
         'callback_unitary_system_sizing',                           # 3,   1.c.1) @ env period,
         'callback_begin_new_environment',                           # 4,   2)     @ start env, 1
         'callback_after_new_environment_warmup_complete',           # 5,   3.a)   @ evn post warmup, 1
-        # Beginning of Zone Timeste
+        # Beginning of Zone Timestep
         'callback_begin_zone_timestep_before_set_current_weather',  # 6,   3.b)   @ zone ts start
         'callback_begin_zone_timestep_before_init_heat_balance',    # 7,   3.c)   @ zone ts
         'callback_begin_zone_timestep_after_init_heat_balance',     # 8,   3.d)   @ zone ts
-        # Zone Load "Predictor" / "Correcto
+        # Zone Load "Predictor" / "Corrector
         'callback_begin_system_timestep_before_predictor',          # 9*,  ?.?)   # TODO zone or sys ts, discrepancy in API and EMS documentation (TEST)
-        'callback_after_predictor_before_hvac_managers',            # 10*, 4.a)  @ zone ts, predictor EMS overwrite by managers
-        'callback_after_predictor_after_hvac_managers',             # 11*, 4.b)  @ zone ts, EMS overwrite managers
+        'callback_after_predictor_before_hvac_managers',            # 10, 4.a)  @ zone ts, predictor EMS overwrite by managers
+        'callback_after_predictor_after_hvac_managers',             # 11, 4.b)  @ zone ts, EMS overwrite managers
         # HVAC Iteration Loop (System Timestep)
         'callback_inside_system_iteration_loop',                    # 12,  5.a) @ sys start, HVAC loop
         'callback_end_system_timestep_before_hvac_reporting',       # 13,  5.b) @ sys ts, HVAC loop
@@ -502,8 +502,11 @@ class EmsPy:
 
     def _enclosing_callback(self, calling_point: str, observation_fxn, actuation_fxn,
                             update_state: bool = False,
-                            update_state_freq: int = 1,
-                            update_act_freq: int = 1):
+                            update_observation_frequency: int = 1,
+                            update_actuation_frequency: int = 1,
+                            observation_function_kwargs: dict = None,
+                            actuation_function_kwargs: dict = None
+                            ):
         """
         Decorates the main callback function to set the user-defined calling point and set timing and data params.
 
@@ -512,9 +515,14 @@ class EmsPy:
         timestep frequency
         :param actuation_fxn: the user defined actuation function to be called at runtime calling point and desired
         timestep frequency
-        :param update_state: whether EMS and time/timestep should be updated. This should only be done ONCE a timestep
-        :param update_state_freq: the number of zone timesteps per updating the simulation state
-        :param update_act_freq: the number of zone timesteps per updating the actuators from the actuation function
+        :param update_state: whether EMS and time/timestep data should be updated from simulation for this calling point
+        :param update_observation_frequency: the number of zone timesteps per running the observation function
+        :param update_actuation_frequency: the number of zone timesteps per updating the actuators from the actuation
+        function
+        :param observation_function_kwargs: a dictionary to be fixed input to your observation function as **kwargs.
+        **kwargs must be in your passed observation function to use, otherwise leave as None
+        :param actuation_function_kwargs: a dictionary to be fixed input to your actuation function as **kwargs.
+        **kwargs must be in your passed actuation function to use, otherwise leave as None
         """
 
         def _callback_function(state_arg):
@@ -544,7 +552,7 @@ class EmsPy:
             self.timestep_zone_num_current = self.api.exchange.zone_time_step_number(state_arg)
             current_timestep = self.timestep_zone_num_current  # preserve for callback # TODO implement
 
-            # TODO verify this is proper way to prevent sub-timestep callbacks, make seperate function
+            # TODO verify this is proper way to prevent sub-timestep callbacks, make separate function
             # FAIL with multiple CPs since they share timesteps
             # catch and skip sub-timestep callbacks, when the timestep num is the same as before
             try:
@@ -563,16 +571,29 @@ class EmsPy:
                 self._update_ems_and_weather_vals(self.ems_names_master_list)  # update sensor/actuator/weather/ vals
                 self.callback_calling_points.append(calling_point)
                 # run user-defined agent state update function
-                if observation_fxn is not None and self.timestep_zone_num_current % update_state_freq == 0:
-                    reward = observation_fxn()  # execute user's state/reward observation
+                if observation_fxn is not None and self.timestep_zone_num_current % update_observation_frequency == 0:
+                    # execute user's state/reward observation
+                    if observation_function_kwargs:
+                        # with kwargs
+                        reward = observation_fxn(**observation_function_kwargs)
+                    else:
+                        # w/out kwargs
+                        reward = observation_fxn()
+
                     if reward is not None:  # reward returned
                         if not self.rewards_created:
                             self._init_reward(reward)
                         self._update_reward(reward)
 
             # -- ACTION UPDATE --
-            if actuation_fxn is not None and self.timestep_zone_num_current % update_act_freq == 0:
-                self._actuate_from_list(calling_point, actuation_fxn())
+            if actuation_fxn is not None and self.timestep_zone_num_current % update_actuation_frequency == 0:
+                # execute user's actuation function
+                if observation_function_kwargs:
+                    # with kwargs
+                    self._actuate_from_list(calling_point, actuation_fxn(**actuation_function_kwargs))
+                else:
+                    # w/out kwargs
+                    self._actuate_from_list(calling_point, actuation_fxn())
 
             # -- INIT/UPDATE CUSTOM DFS --
             # Init
