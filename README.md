@@ -15,12 +15,12 @@ a running building simulation to gather state information and implement custom c
 EMS can be used to create Python plugins or call E+ as a library and run simulations from Python - **EmsPy** utilizes the latter. 
 Please see the documentation hyperlinks below to learn more about EnergyPlus EMS and its Python API. 
 
-Although this repo is meant to simplify EMS and interfacing with E+ - making this research space more accessible to AI and controls 
-people - a good understanding of E+ and building modeling may still be necessary, especially if you intend to create, link, and
- control your own building models. 
-
+Although this repo is meant to wrap EMS and simplify interfacing with E+ for RL purposes - making this research space more readily accessible to AI and controls 
+researchers and hobbyiest - a good understanding of E+ and building modeling may still be necessary, especially if you intend to create, link, and
+control your own building models, or, need more advanced EMS features. EMS offers many entry points during runtime through calling points, each with their own utility, and this API does not limit that functionality. Using this API, observations and actuation functions can be enacted on any to all calling points - whatever fits your specific control and BEM needs. This flexibility naturally leads to more complexity.
+ 
 *Eventually*, some standard building models and template scripts will be created so that 
-user's can simply experiment with them through Python for control purposes with no E+ experience needed. A natural formfactor would be
+user's can simply experiment with them through Python with no E+ experience needed. A natural formfactor would be
 to resemble OpenAI's Gym Environment API. This standardization building models and interaction may also help institute performance benchmarks for the research community. 
  
  Regardless of your use case, you will 
@@ -41,6 +41,8 @@ to resemble OpenAI's Gym Environment API. This standardization building models a
 - Python >= 3.8 
 - pyenergyplus Python package (included in E+ download)
 - [openstudio Python package](https://pypi.org/project/openstudio/) (not currently used, but plan to add functionality)
+
+### Other Helpful E+ Software Tools:
 
 ### Overview
 
