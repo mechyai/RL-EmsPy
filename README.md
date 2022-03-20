@@ -24,7 +24,7 @@ user's can simply experiment with them through Python with no E+ experience need
 to resemble OpenAI's Gym Environment API. This standardization building models and interaction may also help institute performance benchmarks for the research community. 
  
  Regardless of your use case, you will 
- need to have the proper versioned (**9.5.0**) E+ simulation engine downloaded onto your system https://energyplus.net/downloads. 
+ need to have the proper versioned (**9.5.0**) [E+ simulation engine](https://github.com/NREL/EnergyPlus/releases/tag/v9.5.0) downloaded onto your system.
 
 ### Further Documentation:
 - [EnergyPlus](https://energyplus.net/)
