@@ -10,14 +10,15 @@ The RL-centered wrapper, **EmsPy**, is meant to simplify and somewhat constrain 
 EMS API is to interface with a running E+ building simulation and/or inject custom code, which is not so easily done otherwise. 
 EMS exposes E+ real-time simulation data such as variables, internal variables, meters, actuators, and weather. 
 
-Recently, a Python API was created for EMS so users aren't constrained to using the E+ Runtime Language (ERL) and can more naturally interact with 
-a running building simulation to gather state information and implement custom control at runtime (subhourly timesteps).
-EMS can be used to create Python plugins or call E+ as a library and run simulations from Python - **EmsPy** utilizes the latter. 
-Please see the documentation hyperlinks below to learn more about EnergyPlus EMS and its Python API. 
+Recently, a Python API was created for EMS so users aren't limited by the E+ Runtime Language (ERL) and can more naturally interact with 
+a running building simulation to gather state information and implement custom control and simulation modifications at runtime (subhourly timesteps).
+EMS can be used to create Python plugins or call E+ as a library and run simulations directly from Python - **EmsPy** utilizes the latter. 
+Please see the documentation hyperlinks to learn more about [EnergyPlus EMS](https://bigladdersoftware.com/epx/docs/9-5/ems-application-guide/index.html), [Using EnergyPlus as a library](https://bigladdersoftware.com/epx/docs/9-5/input-output-reference/api-usage.html#sec:api-usage), and its [Python API](https://nrel.github.io/EnergyPlus/api/python/index.html). 
 
+**Note:**
 Although this repo is meant to wrap EMS and simplify interfacing with E+ for RL purposes - making this research space more readily accessible to AI and controls 
 researchers and hobbyiest - a good understanding of E+ and building modeling may still be necessary, especially if you intend to create, link, and
-control your own building models, or, need more advanced EMS features. EMS offers many entry points during runtime through calling points, each with their own utility, and this API does not limit that functionality. Using this API, observations and actuation functions can be enacted on any to all calling points - whatever fits your specific control and BEM needs. This flexibility naturally leads to more complexity.
+control your own building models, or, need more advanced EMS features. EMS offers many entry points into the simulation during runtime through calling points, each with their own utility, and this API does not limit that functionality. With this API, observations and actuation functions can be enacted on none, one, to all calling points - whatever fits your specific control and BEM needs. This flexibility naturally leads to more complexity.
  
 *Eventually*, some standard building models and template scripts will be created so that 
 user's can simply experiment with them through Python with no E+ experience needed. A natural formfactor would be
@@ -43,6 +44,7 @@ to resemble OpenAI's Gym Environment API. This standardization building models a
 - [openstudio Python package](https://pypi.org/project/openstudio/) (not currently used, but plan to add functionality)
 
 ### Other Helpful E+ Software Tools:
+- [OpenStudio SDK](https://openstudio-sdk-documentation.s3.amazonaws.com/index.html)
 
 ### Overview
 
