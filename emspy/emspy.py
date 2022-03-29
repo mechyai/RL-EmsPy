@@ -590,7 +590,7 @@ class EmsPy:
             # -- ACTION UPDATE --
             if actuation_fxn is not None and self.timestep_zone_num_current % update_actuation_frequency == 0:
                 # execute user's actuation function
-                if observation_function_kwargs:
+                if actuation_function_kwargs:
                     # with kwargs
                     self._actuate_from_list(calling_point, actuation_fxn(**actuation_function_kwargs))
                 else:
