@@ -144,7 +144,7 @@ class BcaEnv(EmsPy):
         for ems_metric in ems_metric_list:
 
             # TODO do once, again at each timestep is redundant?
-            self._check_ems_metric_input(ems_metric)  # verify valid input
+            # self._check_ems_metric_input(ems_metric)  # verify valid input
             ems_type = self._get_ems_type(ems_metric)  # for attribute variable name
 
             if not time_reverse_index:
@@ -221,11 +221,12 @@ class BcaEnv(EmsPy):
             # if only single EMS category called
             ems_metric_list = list(getattr(self, 'tc_' + ems_metric_list[0]).keys())
         else:
-            # TODO get rid of, doesnt work with multiple method instances
-            for ems_metric in ems_metric_list:
-                if not self.ems_list_update_checked:
+            # TODO get rid of, doesnt work with multiple method instances - OR make work with multiple
+            if not self.ems_list_update_checked:
+                for ems_metric in ems_metric_list:
                     self._check_ems_metric_input(ems_metric)
                     self.ems_list_update_checked = True
+                    print('Check once 1')
 
         self._update_ems_and_weather_vals(ems_metric_list)
         if return_data:
