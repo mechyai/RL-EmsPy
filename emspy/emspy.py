@@ -432,10 +432,10 @@ class EmsPy:
         :return: list of updated weather data in order of weather_metrics input list
         """
         # input error handling
-        if not (when == 'today' or when != 'tomorrow'):
+        if not (when == 'today' or when == 'tomorrow'):
             raise Exception('ERROR: Weather data must either be called from sometime today or tomorrow relative to'
                             ' current simulation timestep.')
-        if hour > 24 or hour < 0:
+        if hour > 23 or hour < 0:
             raise Exception('ERROR: The hour of the day cannot exceed 24 or be less than 0')
         try:
             if zone_ts > self.timestep_per_hour:
